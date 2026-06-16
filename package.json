@@ -5,7 +5,7 @@
   "description": "Propulse AI — AI Operating System for Real Estate. Multi-tenant modular monolith.",
   "packageManager": "pnpm@11.5.1",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.13.0",
     "pnpm": ">=9.0.0"
   },
   "scripts": {

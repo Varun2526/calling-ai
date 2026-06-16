@@ -2,7 +2,7 @@
 # Build from repo root:  docker build -f apps/api/Dockerfile -t propulse/api .
 
 # ---- Builder ----
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 RUN corepack enable
 WORKDIR /repo
 
@@ -19,7 +19,7 @@ RUN pnpm --filter @propulse/database generate \
 RUN pnpm --filter @propulse/api --prod deploy /app
 
 # ---- Runtime ----
-FROM node:20-slim AS runtime
+FROM node:22-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 RUN useradd --create-home --uid 10001 appuser

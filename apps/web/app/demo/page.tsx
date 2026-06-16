@@ -1,4 +1,5 @@
 import { DemoConsole } from '../../features/demo/components/demo-console';
+import { DemoNav } from '../../features/demo/components/demo-nav';
 
 export const metadata = {
   title: 'Propulse AI — Live Demo',
@@ -14,6 +15,7 @@ export const metadata = {
 export default function DemoPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
+      <DemoNav active="chat" />
       <div className="mb-6">
         <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
           Preview · mock AI · no API key needed

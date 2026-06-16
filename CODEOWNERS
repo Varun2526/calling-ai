@@ -1,0 +1,48 @@
+# Propulse AI — Code Ownership
+# Maps directories to owning teams. Each bounded context has an owner responsible for its
+# domain/ purity and public interface. Boundary/architecture configs require an architect.
+# Replace the placeholder @org/team handles with real GitHub teams once they exist.
+
+# Architecture & cross-cutting guardrails — architects must review
+/docs/ARCHITECTURE.md            @org/architects
+/docs/DOMAIN_RULES.md            @org/architects
+/docs/CLEAN_ARCHITECTURE.md      @org/architects
+/docs/REPOSITORY_STRUCTURE.md    @org/architects
+/docs/adr/                       @org/architects
+/packages/eslint-config/         @org/architects @org/platform
+/packages/domain-kernel/         @org/architects
+/turbo.json                      @org/platform
+/tsconfig.base.json              @org/platform
+
+# Platform / infra
+/infra/                          @org/devops
+/packages/database/              @org/platform @org/dba
+/packages/config/                @org/platform
+/packages/observability/         @org/platform
+/apps/workers/                   @org/platform
+/.github/                        @org/platform @org/devops
+
+# Frontend
+/apps/web/                       @org/frontend
+/packages/ui/                    @org/frontend
+
+# Bounded contexts (backend) — context owners
+/apps/api/src/contexts/iam/             @org/identity
+/apps/api/src/contexts/organization/    @org/onboarding
+/apps/api/src/contexts/knowledge-base/  @org/ai-platform
+/apps/api/src/contexts/ai-employee/     @org/ai-platform
+/apps/api/src/contexts/conversation/    @org/conversations
+/apps/api/src/contexts/channels/        @org/conversations
+/apps/api/src/contexts/voice/           @org/voice
+/apps/api/src/contexts/calls/           @org/voice
+/apps/voice-gateway/                    @org/voice
+/apps/api/src/contexts/crm/             @org/crm
+/apps/api/src/contexts/qualification/   @org/crm
+/apps/api/src/contexts/campaign/        @org/campaigns
+/apps/api/src/contexts/appointments/    @org/crm
+/apps/api/src/contexts/notifications/   @org/platform
+/apps/api/src/contexts/analytics/       @org/analytics
+/apps/api/src/contexts/platform-ops/    @org/platform
+
+# Contracts changes ripple across teams — broad review
+/packages/contracts/             @org/architects @org/platform

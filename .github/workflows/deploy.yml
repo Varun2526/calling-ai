@@ -88,7 +88,8 @@ jobs:
       # TODO (DEPLOYMENT_GUIDE §4): run DB migrations as a one-off ECS task on the
       # dedicated migration role BEFORE app rollout; gate rollout on exit code 0.
       - name: Run migrations (placeholder)
-        run: echo "TODO: aws ecs run-task → infra/scripts/migrate (prisma migrate deploy)"
+        run: |
+          echo "TODO: aws ecs run-task -> infra/scripts/migrate (prisma migrate deploy)"
 
       # TODO (DEPLOYMENT_GUIDE §2.3): render task-def with the new image digest,
       # register a revision, then force a rolling deploy and wait for steady state.
@@ -102,4 +103,5 @@ jobs:
 
       # TODO (DEPLOYMENT_GUIDE §8/§9): run smoke tests; auto-rollback to previous digest on failure.
       - name: Smoke tests (placeholder)
-        run: echo "TODO: infra/scripts/smoke-test against the freshly deployed env"
+        run: |
+          echo "TODO: infra/scripts/smoke-test against the freshly deployed env"

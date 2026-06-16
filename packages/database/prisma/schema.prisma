@@ -1,0 +1,160 @@
+// Propulse AI — persistence schema (packages/database)
+//
+// Multi-tenancy model (see docs/ARCHITECTURE.md §10): single database, shared
+// schema, `organizationId` discriminator. Tenant isolation is defended in depth by
+//   1. the application tenant guard (derives org from the session),
+//   2. the Prisma tenant-scoping extension (src/tenant-middleware.ts),
+//   3. Postgres Row-Level Security (prisma/rls.sql).
+//
+// This schema is a SMALL, representative slice that demonstrates the tenant-scoped
+// pattern — NOT the full domain. Every tenant-scoped model carries `organizationId`
+// and is registered with the tenant extension (see TENANT_SCOPED_MODELS in src).
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum Role {
+  SUPER_ADMIN
+  OPERATIONS_ADMIN
+  CLIENT_OWNER
+  SALES_MANAGER
+  SALES_EXECUTIVE
+  PRE_SALES_EXECUTIVE
+  SUPPORT
+}
+
+enum LeadStage {
+  NEW
+  QUALIFIED
+  VISIT_SCHEDULED
+  VISIT_COMPLETED
+  NEGOTIATION
+  BOOKED
+  LOST
+}
+
+// ─── Tenant root ──────────────────────────────────────────────────────────────
+
+// The tenant root. NOT itself tenant-scoped (it IS the tenant). Super-admin /
+// platform-ops paths operate across organizations through an audited, RLS-bypassing
+// role — never through the normal tenant-scoped client.
+model Organization {
+  id        String             @id @default(cuid())
+  name      String
+  status    OrganizationStatus @default(ACTIVE)
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  users     User[]
+  contacts  Contact[]
+  leads     Lead[]
+
+  @@map("organizations")
+}
+
+// ─── Tenant-scoped models (every one carries organizationId) ──────────────────
+
+model User {
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  email          String
+  role           Role
+  status         UserStatus @default(INVITED)
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  assignedLeads Lead[]      @relation("LeadAssignee")
+
+  // Email is unique within a tenant, not globally.
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  fullName       String   @map("full_name")
+  phone          String?
+  email          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  leads        Lead[]
+
+  @@index([organizationId])
+  @@map("contacts")
+}
+
+model Lead {
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  contactId         String    @map("contact_id")
+  stage             LeadStage @default(NEW)
+  score             Int?
+  source            String?
+  assignedToUserId  String?   @map("assigned_to_user_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contact      Contact      @relation(fields: [contactId], references: [id])
+  assignedTo   User?        @relation("LeadAssignee", fields: [assignedToUserId], references: [id])
+
+  @@index([organizationId])
+  @@index([organizationId, stage])
+  @@index([contactId])
+  @@map("leads")
+}
+
+// Transactional outbox: domain events are written in the SAME transaction as the
+// state change, then relayed asynchronously (workers/outbox-relay). Tenant-scoped.
+model OutboxEvent {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  eventName      String    @map("event_name")
+  aggregateId    String    @map("aggregate_id")
+  payload        Json
+  occurredAt     DateTime  @default(now()) @map("occurred_at")
+  processedAt    DateTime? @map("processed_at")
+  attempts       Int       @default(0)
+
+  @@index([organizationId])
+  // Relay polls for unprocessed events; index supports `WHERE processed_at IS NULL`.
+  @@index([processedAt])
+  @@map("outbox_events")
+}
+
+// Append-only audit trail. `organizationId` is nullable to allow platform-level
+// (cross-tenant) super-admin actions to be recorded.
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?  @map("organization_id")
+  actorUserId    String?  @map("actor_user_id")
+  action         String
+  subject        String
+  metadata       Json
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId])
+  @@map("audit_logs")
+}

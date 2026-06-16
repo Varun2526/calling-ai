@@ -1,0 +1,76 @@
+name: CI
+
+# Runs the full quality gate on every push and PR to main.
+# Mirrors docs/DEPLOYMENT_GUIDE.md §2.1 and the enforcement rules in
+# docs/CLEAN_ARCHITECTURE.md §5. A boundary/domain-purity violation fails the build.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Turborepo writes its local cache here; we restore/save it via actions/cache below.
+  TURBO_TELEMETRY_DISABLED: "1"
+
+jobs:
+  ci:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history lets turbo compute affected packages accurately.
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.1
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Restore Turborepo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm turbo run lint --cache-dir=.turbo
+
+      - name: Typecheck
+        run: pnpm turbo run typecheck --cache-dir=.turbo
+
+      - name: Unit tests
+        run: pnpm turbo run test --cache-dir=.turbo
+
+      # ── Architecture boundary enforcement (docs/CLEAN_ARCHITECTURE.md §5) ──
+      - name: Boundaries — dependency-cruiser
+        run: pnpm dlx dependency-cruiser apps/api/src --config .dependency-cruiser.cjs
+
+      - name: Boundaries — domain purity grep
+        run: bash scripts/check-domain-purity.sh
+
+      - name: Build
+        run: pnpm turbo run build --cache-dir=.turbo

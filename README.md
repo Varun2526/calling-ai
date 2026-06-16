@@ -4,10 +4,25 @@
 > qualify, nurture, schedule, and convert property buyers across website chat, WhatsApp, and
 > phone. Multi-tenant, enterprise-grade, internally deployed in under 30 minutes per client.
 
-This repository is currently at the **architecture & foundation** stage. It contains the
-definitive architectural blueprint, engineering standards, and documentation system that all
-implementation must follow. **No application code is scaffolded yet — by design.** Read the
-docs before writing a line of code.
+This repository contains the definitive architectural blueprint **and** the Phase 0 monorepo
+skeleton that wires in the guardrails before feature code begins. Read the docs before writing
+a line of code.
+
+**Phase 0 status (scaffold in place):** Turborepo + pnpm workspace with `apps/{web,api,voice-gateway,workers}`
+and `packages/{domain-kernel,contracts,config,database,observability,ui,eslint-config,tsconfig}`.
+The architecture is enforced mechanically — `pnpm install && pnpm turbo run typecheck && pnpm test
+&& pnpm boundaries` all pass, and the Clean Architecture boundaries are validated by
+dependency-cruiser, a domain-purity script, and an architecture fitness test (a deliberate
+domain→infra import fails CI). Bounded contexts beyond the `iam` reference example are module
+stubs awaiting implementation per the [roadmap](docs/ROADMAP.md).
+
+```bash
+pnpm install                      # install workspace
+pnpm --filter @propulse/database generate   # generate Prisma client
+pnpm turbo run typecheck test     # verify
+pnpm boundaries                   # enforce architecture boundaries
+pnpm dev                          # run apps (needs docker-compose services up)
+```
 
 ---
 

@@ -1,0 +1,22 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Native/post-install build scripts are gated by default for supply-chain safety. These are
+# trusted: Prisma builds its query engine; esbuild backs tsup/tsx; msgpackr-extract is a
+# bullmq transitive native build; @nestjs/core has a benign postinstall.
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - prisma
+  - esbuild
+  - msgpackr-extract
+  - "@nestjs/core"

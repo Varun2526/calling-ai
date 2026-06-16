@@ -1,0 +1,105 @@
+name: Deploy (skeleton)
+
+# ⚠️ SKELETON — NOT WIRED FOR REAL DEPLOYS YET.
+# This is the target shape described in docs/DEPLOYMENT_GUIDE.md §2.2–§2.4.
+# Steps marked TODO must be implemented once infra/ (CDK/Terraform) and the ECR
+# repos / ECS services / OIDC roles exist. Until then this workflow is intentionally
+# inert (the real AWS steps are commented out so it cannot accidentally deploy).
+#
+# Release model (DEPLOYMENT_GUIDE §2): immutable artifacts promoted by digest.
+#   merge to main ──▶ build+push ──▶ deploy dev
+#   RC tag         ──▶ deploy staging
+#   release        ──▶ manual approval ──▶ promote SAME digest to prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [dev, staging, prod]
+        default: dev
+  release:
+    types: [published]
+
+# OIDC: the job assumes a per-environment IAM role instead of long-lived keys.
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  # One ECR repo per deployable (DEPLOYMENT_GUIDE §2.2). Image tag = immutable git SHA.
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    # Matrix over the four deployables; each has its own Dockerfile under apps/<app>/Dockerfile.
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, api, voice-gateway, workers]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # TODO: assume the build/push role via OIDC (placeholder ARN).
+      - name: Configure AWS credentials (OIDC)
+        if: false # ← flip to a real condition once the role exists
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::000000000000:role/propulse-${{ inputs.environment || 'dev' }}-gha-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      # TODO: login to ECR.
+      # - name: Login to Amazon ECR
+      #   uses: aws-actions/amazon-ecr-login@v2
+
+      # TODO: build the multi-stage image for this app and push by digest.
+      #   docker build -f apps/${{ matrix.app }}/Dockerfile \
+      #     -t $ECR_REGISTRY/propulse-${{ matrix.app }}:${{ env.IMAGE_TAG }} .
+      #   docker push  $ECR_REGISTRY/propulse-${{ matrix.app }}:${{ env.IMAGE_TAG }}
+      #   Enable ECR scan-on-push; fail pipeline on CRITICAL CVEs.
+      - name: Build & push (placeholder)
+        run: |
+          echo "TODO: build & push apps/${{ matrix.app }}/Dockerfile to ECR as :${IMAGE_TAG}"
+          echo "Record the resulting digest — digests are what get promoted, never tags."
+
+  deploy:
+    name: Deploy to ECS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # GitHub Environments protection rule gates prod with a manual DevOps approval
+    # (DEPLOYMENT_GUIDE §2.4). Configure required reviewers on the 'prod' environment.
+    environment: ${{ inputs.environment || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        if: false # ← flip to a real condition once the role exists
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::000000000000:role/propulse-${{ inputs.environment || 'dev' }}-gha-ecs-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      # TODO (DEPLOYMENT_GUIDE §4): run DB migrations as a one-off ECS task on the
+      # dedicated migration role BEFORE app rollout; gate rollout on exit code 0.
+      - name: Run migrations (placeholder)
+        run: echo "TODO: aws ecs run-task → infra/scripts/migrate (prisma migrate deploy)"
+
+      # TODO (DEPLOYMENT_GUIDE §2.3): render task-def with the new image digest,
+      # register a revision, then force a rolling deploy and wait for steady state.
+      #   aws ecs update-service --cluster propulse-$ENV --service <svc> --force-new-deployment
+      #   aws ecs wait services-stable ...
+      - name: Deploy services (placeholder)
+        run: |
+          for app in web api voice-gateway workers; do
+            echo "TODO: register task-def revision for $app @ ${IMAGE_TAG} and roll out"
+          done
+
+      # TODO (DEPLOYMENT_GUIDE §8/§9): run smoke tests; auto-rollback to previous digest on failure.
+      - name: Smoke tests (placeholder)
+        run: echo "TODO: infra/scripts/smoke-test against the freshly deployed env"

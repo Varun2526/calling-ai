@@ -1,0 +1,78 @@
+# Propulse AI — LOCAL DEV STACK ONLY (REPOSITORY_STRUCTURE.md §2).
+#
+# Docker is NOT required to read or reason about the code — it is only needed to actually
+# RUN the system locally (DB, cache, mail, S3). Cloud environments use real AWS managed
+# services (RDS, ElastiCache, S3, SES) provisioned by infra/, never this compose file.
+#
+# Bring it up:   docker compose up -d
+# Credentials below intentionally match .env.example (DATABASE_URL / REDIS_URL / SMTP_URL /
+# AWS_ENDPOINT_URL). Copy .env.example → .env for the apps to pick these up.
+
+services:
+  postgres:
+    # pgvector image = Postgres 16 with the vector extension preinstalled (embeddings).
+    image: pgvector/pgvector:pg16
+    container_name: propulse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: propulse
+      POSTGRES_PASSWORD: propulse
+      POSTGRES_DB: propulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U propulse -d propulse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    # Cache, pub/sub, and BullMQ broker (REDIS_URL=redis://localhost:6379).
+    image: redis:7-alpine
+    container_name: propulse-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    # Local SMTP sink + web UI. SMTP_URL=smtp://localhost:1025; inbox at http://localhost:8025.
+    # Using Mailpit (actively maintained MailHog-compatible drop-in).
+    image: axllent/mailpit:latest
+    container_name: propulse-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # web UI
+    environment:
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+
+  localstack:
+    # Emulates AWS S3 locally (AWS_ENDPOINT_URL=http://localhost:4566).
+    image: localstack/localstack:latest
+    container_name: propulse-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: ap-south-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - localstack-data:/var/lib/localstack
+
+volumes:
+  postgres-data:
+  redis-data:
+  localstack-data:

@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "boundaries": "depcruise src --config ../../.dependency-cruiser.cjs",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@propulse/config": "workspace:*",
@@ -38,6 +39,7 @@
     "dependency-cruiser": "^16.4.1",
     "eslint": "^9.10.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
   }
 }

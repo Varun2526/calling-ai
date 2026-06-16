@@ -9,15 +9,15 @@
 
 ## Metadata
 
-| Field | Value |
-|---|---|
-| **Runbook ID** | 0001 |
-| **Title** | BullMQ queue backlog / workers falling behind |
-| **Severity** | Sev-2 (escalates to Sev-1 if it stalls a Sev-1-class path — e.g. notifications/follow-ups missing SLAs at scale, or campaign sends frozen org-wide) |
-| **Owner** | Platform team (with the context owner for the specific queue: ingestion/embedding/transcription/summary/campaign/follow-up/notifications/analytics) |
-| **Affected services** | `apps/workers`, Redis/ElastiCache, and any downstream third party (OpenAI/Deepgram/ElevenLabs/Twilio/WhatsApp/SES) |
-| **Last reviewed** | 2026-06-16 |
-| **Related** | [`ARCHITECTURE.md`](../ARCHITECTURE.md) §8 (outbox→BullMQ), §12 (queues as shock absorbers, per-org fairness) |
+| Field                 | Value                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Runbook ID**        | 0001                                                                                                                                                |
+| **Title**             | BullMQ queue backlog / workers falling behind                                                                                                       |
+| **Severity**          | Sev-2 (escalates to Sev-1 if it stalls a Sev-1-class path — e.g. notifications/follow-ups missing SLAs at scale, or campaign sends frozen org-wide) |
+| **Owner**             | Platform team (with the context owner for the specific queue: ingestion/embedding/transcription/summary/campaign/follow-up/notifications/analytics) |
+| **Affected services** | `apps/workers`, Redis/ElastiCache, and any downstream third party (OpenAI/Deepgram/ElevenLabs/Twilio/WhatsApp/SES)                                  |
+| **Last reviewed**     | 2026-06-16                                                                                                                                          |
+| **Related**           | [`ARCHITECTURE.md`](../ARCHITECTURE.md) §8 (outbox→BullMQ), §12 (queues as shock absorbers, per-org fairness)                                       |
 
 ---
 

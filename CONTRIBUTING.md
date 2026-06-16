@@ -97,8 +97,8 @@ rules + the allowed-import matrix: [`docs/CLEAN_ARCHITECTURE.md`](docs/CLEAN_ARC
 
 1. **Domain purity** — nothing in any `domain/` folder imports `@nestjs`, `@prisma`, `bullmq`,
    `ioredis`, `aws-sdk`, `axios`, or touches `process.env`. The domain is pure and unit-testable.
-2. **No cross-context internals** — a context may import another context's *published application
-   interface* or *contracts/events* only — never its `domain/` or `infrastructure/`.
+2. **No cross-context internals** — a context may import another context's _published application
+   interface_ or _contracts/events_ only — never its `domain/` or `infrastructure/`.
 3. **No cross-context table access** — one context's Prisma models/tables are private. Cross-context
    data flows via a published query or a domain event.
 4. **Side effects are events** — don't call another context's service inline; emit an event to the
@@ -107,17 +107,17 @@ rules + the allowed-import matrix: [`docs/CLEAN_ARCHITECTURE.md`](docs/CLEAN_ARC
    tenant middleware; `organizationId` comes from auth, never the request body.
 6. **Env via `packages/config`** — no scattered `process.env`.
 
-**How CI enforces it** (a violation is a *build failure*, not a review comment):
+**How CI enforces it** (a violation is a _build failure_, not a review comment):
 
-| Gate | Catches |
-|---|---|
-| `eslint` (`no-restricted-imports`, `eslint-plugin-boundaries`) | illegal layer/context imports |
-| `dependency-cruiser` (`pnpm boundaries`) | the import matrix + no cross-context internals + no cycles |
-| domain-purity grep | framework/infra imports or `process.env` inside `domain/` |
-| Prisma tenant lint | tenant-scoped models missing `organization_id`/middleware |
-| `architecture.spec.ts` fitness test | layer dependency assertions |
+| Gate                                                           | Catches                                                    |
+| -------------------------------------------------------------- | ---------------------------------------------------------- |
+| `eslint` (`no-restricted-imports`, `eslint-plugin-boundaries`) | illegal layer/context imports                              |
+| `dependency-cruiser` (`pnpm boundaries`)                       | the import matrix + no cross-context internals + no cycles |
+| domain-purity grep                                             | framework/infra imports or `process.env` inside `domain/`  |
+| Prisma tenant lint                                             | tenant-scoped models missing `organization_id`/middleware  |
+| `architecture.spec.ts` fitness test                            | layer dependency assertions                                |
 
-The **only** way to relax a boundary is an ADR that updates `CLEAN_ARCHITECTURE.md` *and* the lint
+The **only** way to relax a boundary is an ADR that updates `CLEAN_ARCHITECTURE.md` _and_ the lint
 config in the same PR.
 
 ---

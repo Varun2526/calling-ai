@@ -26,11 +26,11 @@ duplicated. Handlers are **idempotent** (dedupe by event id).
 
 ## Scripts
 
-| Script | Action |
-|---|---|
-| `dev` | `tsx watch src/main.ts` |
-| `build` | `tsc -p tsconfig.json` |
-| `start` | `node dist/main.js` |
-| `typecheck` | `tsc --noEmit` |
-| `lint` | `eslint .` |
-| `clean` | remove `dist` / `.turbo` |
+| Script      | Action                   |
+| ----------- | ------------------------ |
+| `dev`       | `tsx watch src/main.ts`  |
+| `build`     | `tsc -p tsconfig.json`   |
+| `start`     | `node dist/main.js`      |
+| `typecheck` | `tsc --noEmit`           |
+| `lint`      | `eslint .`               |
+| `clean`     | remove `dist` / `.turbo` |

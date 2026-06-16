@@ -23,14 +23,14 @@
 
 ## 1. Latency budgets
 
-| Path | Budget (p95) | Notes |
-|---|---|---|
-| **Voice turn** (user stops → AI audio starts) | **< 1.2s** | The human-ness bar. Streaming pipeline, §2. |
-| **Text conversation** (webhook → AI reply) | **< 2s** | Chat/WhatsApp. §3 caching + grounded RAG. |
-| KB/CRM search during a live conversation | tens of ms (cached) | Must be cache + indexed pgvector; never a cold path on the hot loop. |
-| Dashboard / lead-list / timeline load | < 500ms p95 | Read models for Analytics; paginated; no N+1. |
-| Config CRUD (org / AI-employee) | < 300ms p95 | Cache-invalidating writes (§3). |
-| Async (ingestion, transcription, summary, campaign) | not latency-critical | Throughput + fairness matter, not turn latency (§5). |
+| Path                                                | Budget (p95)         | Notes                                                                |
+| --------------------------------------------------- | -------------------- | -------------------------------------------------------------------- |
+| **Voice turn** (user stops → AI audio starts)       | **< 1.2s**           | The human-ness bar. Streaming pipeline, §2.                          |
+| **Text conversation** (webhook → AI reply)          | **< 2s**             | Chat/WhatsApp. §3 caching + grounded RAG.                            |
+| KB/CRM search during a live conversation            | tens of ms (cached)  | Must be cache + indexed pgvector; never a cold path on the hot loop. |
+| Dashboard / lead-list / timeline load               | < 500ms p95          | Read models for Analytics; paginated; no N+1.                        |
+| Config CRUD (org / AI-employee)                     | < 300ms p95          | Cache-invalidating writes (§3).                                      |
+| Async (ingestion, transcription, summary, campaign) | not latency-critical | Throughput + fairness matter, not turn latency (§5).                 |
 
 **Rule:** if a third party with variable latency sits on a user-waiting path and isn't required to
 render the current screen or the current turn, it belongs on a queue (ARCHITECTURE §9). The voice
@@ -53,7 +53,7 @@ The voice realtime loop runs in `apps/voice-gateway` (ARCHITECTURE §1, ADR-0005
 - [ ] **Barge-in is first-class.** `BargeInHandler` (BC-3) must cut TTS within a frame or two when
       the caller starts speaking — a human-like agent stops talking when interrupted.
 - [ ] **Pre-warm the hot path.** AI-employee config, persona/prompt scaffolding, and the org's KB
-      retrieval cache (§3) are warm *before* the turn — prompt assembly is deterministic given the
+      retrieval cache (§3) are warm _before_ the turn — prompt assembly is deterministic given the
       same inputs (BC-1.AI invariant), so precompute what you can at call start.
 - [ ] **KB/CRM lookups on the voice loop are cache-first** and tenant-filtered; a cache miss must
       have a hard timeout + graceful degrade (answer from persona / escalate) rather than blow the
@@ -74,19 +74,19 @@ The voice realtime loop runs in `apps/voice-gateway` (ARCHITECTURE §1, ADR-0005
 ARCHITECTURE §13: explicit TTL **plus** event-driven invalidation. Every key is tenant-prefixed
 (`org:{id}:...` — see SECURITY §1). Caches are read-through; never a source of truth.
 
-| Cache | Key shape | TTL | Invalidation |
-|---|---|---|---|
-| Org config | `org:{id}:config` | hours (rarely changes) | `org.profile.updated.v1`, `org.template.applied.v1` |
-| AI-employee config | `org:{id}:aiemployee:{id}` | hours | `ai.employee.updated.v1` |
-| Identity resolution | `org:{id}:identity:{channelId}` | minutes–hours | `conversation.identity.merged.v1`, `crm.contact.merged.v1` |
-| KB retrieval results | `org:{id}:kb:{embeddingHash}` | minutes | `kb.source.reindexed.v1`, `kb.ingestion.completed.v1` (for that source) |
-| Rate-limit counters | `org:{id}:ratelimit:{scope}` | window length | natural expiry |
-| Session / reasoning session | `org:{id}:session:*` | session/turn-bound | explicit on revoke/end |
+| Cache                       | Key shape                       | TTL                    | Invalidation                                                            |
+| --------------------------- | ------------------------------- | ---------------------- | ----------------------------------------------------------------------- |
+| Org config                  | `org:{id}:config`               | hours (rarely changes) | `org.profile.updated.v1`, `org.template.applied.v1`                     |
+| AI-employee config          | `org:{id}:aiemployee:{id}`      | hours                  | `ai.employee.updated.v1`                                                |
+| Identity resolution         | `org:{id}:identity:{channelId}` | minutes–hours          | `conversation.identity.merged.v1`, `crm.contact.merged.v1`              |
+| KB retrieval results        | `org:{id}:kb:{embeddingHash}`   | minutes                | `kb.source.reindexed.v1`, `kb.ingestion.completed.v1` (for that source) |
+| Rate-limit counters         | `org:{id}:ratelimit:{scope}`    | window length          | natural expiry                                                          |
+| Session / reasoning session | `org:{id}:session:*`            | session/turn-bound     | explicit on revoke/end                                                  |
 
 - [ ] **KB retrieval is keyed by query embedding hash**, not raw text — semantically-identical
       queries hit the same cache entry. Cache the `RetrievalResult` set (chunks + scores +
       citations), tenant-scoped.
-- [ ] **Event-driven invalidation over short TTL.** Config caches can have long TTLs *because* they
+- [ ] **Event-driven invalidation over short TTL.** Config caches can have long TTLs _because_ they
       bust on the relevant domain event (ARCHITECTURE §8 events). Don't paper over staleness with
       tiny TTLs that just thrash.
 - [ ] **Never cache across tenants.** A cache helper without an `organizationId` in the key is a bug
@@ -244,6 +244,7 @@ Observability spans everything: CloudWatch (metrics/logs/alarms) + Sentry (error
 ARCHITECTURE §1.
 
 **SLOs (alarm on breach):**
+
 - [ ] Voice turn latency p95 < 1.2s (and per-stage: first-STT-partial, first-LLM-token, first-TTS-audio).
 - [ ] Text conversation latency p95 < 2s.
 - [ ] API p95 latency + error rate per route; WS connect/delivery latency.
@@ -253,6 +254,7 @@ ARCHITECTURE §1.
 - [ ] Provider error/429 rate + per-tenant cost burn vs. cap.
 
 **Alarm on (the "system is degrading/broken" signals):**
+
 - [ ] Voice turn p95 trending toward 1.2s, or call-drop / failed-handoff rate up.
 - [ ] Queue depth growing unbounded; DLQ growth; oldest-job-age past threshold.
 - [ ] Per-tenant fairness breach (one org consuming disproportionate worker time).
@@ -266,17 +268,20 @@ ARCHITECTURE §1.
 ## PERFORMANCE REVIEW CHECKLIST (for every PR)
 
 **Latency budgets**
+
 - [ ] Does this touch the voice loop? If so, it streams (STT partials → LLM on partials → streaming
       TTS), never waits for full transcript, and was measured against the 1.2s p95 budget.
 - [ ] Does this touch the text conversation path? Measured against the 2s p95 budget.
 - [ ] No new variable-latency third-party call added to a user-waiting/turn path that should be a queue job.
 
 **Caching**
+
 - [ ] New cacheable reads use the right Redis tier with explicit TTL **and** event-driven invalidation.
 - [ ] Every cache key is `org:{id}:`-prefixed (no cross-tenant cache).
 - [ ] KB retrieval cached by embedding hash; stampede control on expensive recomputes.
 
 **Database**
+
 - [ ] No N+1 (reviewed generated SQL for any new list/timeline query).
 - [ ] Pagination on every new list endpoint (cursor/keyset on high-volume tables).
 - [ ] Indexes added/verified (`EXPLAIN`) for new hot queries; `organizationId`-leading.
@@ -285,18 +290,22 @@ ARCHITECTURE §1.
 - [ ] pgvector queries pre-filter by org; HNSW params considered; FTS uses GIN.
 
 **Queues**
+
 - [ ] Per-queue concurrency set; handler idempotent (dedupe by job/event id).
 - [ ] Per-tenant rate limiting / fairness preserved (no noisy-neighbor regression).
 - [ ] Provider-bound work is quota-throttled at the queue; embeddings/fan-out batched.
 
 **Frontend**
+
 - [ ] RSC + per-feature code-split where applicable; paginated server data loading.
 - [ ] Chat changes keep optimistic UI; realtime via WS, not polling.
 
 **Cost & realtime**
+
 - [ ] Token/provider-call cost per turn not silently increased; usage telemetry emitted (feeds CPL/ROAS).
 - [ ] Per-tenant cost cap respected; model right-sized for the task.
 - [ ] New realtime fan-out goes through Redis pub/sub to tenant rooms; no in-memory session state on api/web.
 
 **SLO/observability**
+
 - [ ] New hot path emits the metrics needed to watch its SLO; relevant alarms added/updated.

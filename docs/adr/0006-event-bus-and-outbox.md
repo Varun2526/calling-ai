@@ -20,8 +20,8 @@ context's service) — has two fatal flaws. First, it couples contexts synchrono
 the modular-monolith boundaries ([ADR-0002](0002-modular-monolith-over-microservices.md)).
 Second, and worse, it can **half-succeed**: if "lead created" commits but the in-memory
 "send notification" handler crashes (or vice versa), state and side effects diverge with no
-recovery. We need cross-context side effects that are *transactionally consistent with the
-state change that caused them* and *reliably delivered* even across process crashes — without
+recovery. We need cross-context side effects that are _transactionally consistent with the
+state change that caused them_ and _reliably delivered_ even across process crashes — without
 prematurely adopting an external broker.
 
 ## Decision
@@ -41,19 +41,19 @@ handlers must be idempotent. Events are immutable past-tense facts named
    half-success.
 2. A **relay** (in-process poller / Postgres `LISTEN`, run as the `outbox-relay` processor in
    `apps/workers` — [`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md) §2) publishes
-   *committed* events to **BullMQ** over Redis.
+   _committed_ events to **BullMQ** over Redis.
 3. **Typed handlers** run in `apps/workers`, consuming events to perform cross-context side
    effects.
 
 **Delivery semantics & idempotency.** This gives **at-least-once** delivery with no lost events
-on crash. The cost is possible *redelivery*, so **every handler must be idempotent** (dedupe by
+on crash. The cost is possible _redelivery_, so **every handler must be idempotent** (dedupe by
 event id; e.g. Notifications dedupes by event id + recipient + channel —
 [`DOMAIN_RULES.md`](../DOMAIN_RULES.md) BC-12; Analytics projections are rebuildable/idempotent
 by replay — BC-13). Failed handlers retry with backoff, then dead-letter and surface (the
 `WorkflowFailure` signal must never be silently dropped — [`DOMAIN_RULES.md`](../DOMAIN_RULES.md) BC-12).
 
 **Events are facts, commands are not.** Events are **past-tense, immutable, versioned facts**.
-Commands (imperative, e.g. `BookSiteVisit`) are *not* placed on the bus — they are dispatched
+Commands (imperative, e.g. `BookSiteVisit`) are _not_ placed on the bus — they are dispatched
 within the owning context's transaction or as request/response
 ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §5, §8). The AI Employee's actions are commands routed
 through its `ActionDispatcher` ([`DOMAIN_RULES.md`](../DOMAIN_RULES.md) BC-1.AI), distinct from
@@ -81,7 +81,7 @@ event schemas live in `packages/contracts`.
   - Queues double as shock absorbers and rate-limit points for third parties
     ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §12).
 - **Negative / accepted trade-offs:**
-  - **Eventual consistency** across contexts — consumers see effects shortly *after* the commit,
+  - **Eventual consistency** across contexts — consumers see effects shortly _after_ the commit,
     not within it. Workflows must tolerate this.
   - **At-least-once** forces idempotency everywhere; a non-idempotent handler is a latent bug
     (double notifications, double-counted metrics).
@@ -95,12 +95,12 @@ event schemas live in `packages/contracts`.
 
 ## Alternatives considered
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Inline / synchronous cross-context calls** | Simplest; immediately consistent | Tight coupling (breaks boundaries); half-success on partial failure; no recovery | ❌ rejected — the Violation D anti-pattern |
-| **In-memory event bus, no outbox** | Decoupled, no broker | Events lost on crash between commit and dispatch; no at-least-once guarantee | ❌ rejected — loses events; unacceptable for "lead created → notify" |
-| **External broker (Kafka/SNS-SQS) from day one** | Durable, scalable, decoupled | Premature infra + ops cost for V1; the outbox already gives us the seam to adopt it later | ❌ deferred — adopt on extraction, not now |
-| **Transactional outbox → relay → BullMQ, idempotent handlers (chosen)** | Atomic with state change; at-least-once; decoupled; clean extraction seam | Eventual consistency; mandatory idempotency; relay to operate | ✅ **chosen** |
+| Option                                                                  | Pros                                                                      | Cons                                                                                      | Verdict                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Inline / synchronous cross-context calls**                            | Simplest; immediately consistent                                          | Tight coupling (breaks boundaries); half-success on partial failure; no recovery          | ❌ rejected — the Violation D anti-pattern                           |
+| **In-memory event bus, no outbox**                                      | Decoupled, no broker                                                      | Events lost on crash between commit and dispatch; no at-least-once guarantee              | ❌ rejected — loses events; unacceptable for "lead created → notify" |
+| **External broker (Kafka/SNS-SQS) from day one**                        | Durable, scalable, decoupled                                              | Premature infra + ops cost for V1; the outbox already gives us the seam to adopt it later | ❌ deferred — adopt on extraction, not now                           |
+| **Transactional outbox → relay → BullMQ, idempotent handlers (chosen)** | Atomic with state change; at-least-once; decoupled; clean extraction seam | Eventual consistency; mandatory idempotency; relay to operate                             | ✅ **chosen**                                                        |
 
 ## Related
 

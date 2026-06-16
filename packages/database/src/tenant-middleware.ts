@@ -69,7 +69,10 @@ const WHERE_OPERATIONS = new Set([
 // Operations whose `data` we should stamp with organizationId.
 const CREATE_OPERATIONS = new Set(['create', 'createMany', 'upsert']);
 
-function injectWhere(args: Record<string, unknown>, organizationId: string): Record<string, unknown> {
+function injectWhere(
+  args: Record<string, unknown>,
+  organizationId: string,
+): Record<string, unknown> {
   const existingWhere = (args.where as Record<string, unknown> | undefined) ?? {};
   return { ...args, where: { ...existingWhere, organizationId } };
 }

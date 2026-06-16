@@ -3,7 +3,7 @@
 > This document is the **verbatim business source of truth** for Propulse AI.
 > It MUST NOT be edited to change intent. Architectural interpretations,
 > clarifications, and recommended amendments live in [`../PRD_REVIEW.md`](../PRD_REVIEW.md)
-> and the [ADR log](../adr/). When code and this PRD disagree on *intent*, this PRD wins
+> and the [ADR log](../adr/). When code and this PRD disagree on _intent_, this PRD wins
 > until an ADR supersedes a specific clause.
 
 ---
@@ -132,6 +132,7 @@ Mixed Language Support (e.g. Telugu+English, Hindi+English, Tamil+English). The 
 auto-detect language, switch languages, remember preferences, respond naturally.
 
 Regional Intelligence examples:
+
 - "Schools daggara undali" → Family Buyer.
 - "Rental yield ela untundi?" → Investor.
 - "Loan process ela untundi?" → Financing Required.
@@ -277,4 +278,4 @@ languages, remember context, qualify buyers, run campaigns, call prospects, sche
 visits, follow up automatically, record conversations, generate transcripts and summaries,
 update CRM automatically, and provide complete visibility into the entire sales pipeline.
 
-The AI should be so natural that buyers frequently ask: *"Was that an actual person or AI?"*
+The AI should be so natural that buyers frequently ask: _"Was that an actual person or AI?"_

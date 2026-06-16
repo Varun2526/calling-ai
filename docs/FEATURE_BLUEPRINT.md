@@ -30,7 +30,7 @@ delivery. A worked end-to-end example lives at
 Why mandatory, not optional:
 
 - **Boundaries erode silently.** The spec forces you to name the bounded context(s), the
-  aggregates, and the events *before* you write code that quietly reaches across a boundary.
+  aggregates, and the events _before_ you write code that quietly reaches across a boundary.
 - **Tenant safety is non-negotiable.** The DB, infra, and testing sections force `organizationId`,
   RLS, tenant-scoped keys, and cross-tenant tests every single time.
 - **Side effects must be events.** The event section forces you to declare facts emitted/consumed
@@ -63,8 +63,9 @@ an `N/A` reads as "considered and excluded"). For each section below: **what it 
 not implementation language.
 
 **Guidance:**
-- State the *actor* (which PRD role: Sales Executive, Client Owner, buyer/prospect, platform
-  Ops, AI Employee acting on behalf of the org) and the *job to be done*.
+
+- State the _actor_ (which PRD role: Sales Executive, Client Owner, buyer/prospect, platform
+  Ops, AI Employee acting on behalf of the org) and the _job to be done_.
 - Tie it to a product/PRD line item and to a metric it should move (e.g. response time, CPL,
   site-visit conversion, lead leakage).
 - Note explicitly out-of-scope items so the boundary of the feature is unambiguous.
@@ -80,6 +81,7 @@ endpoints, or queues.
 **What:** Executable-style scenarios that define "done" behaviourally.
 
 **Guidance:**
+
 - Write `Scenario:` blocks in `Given / When / Then` (and `And`) form.
 - Cover the happy path, the key alternate paths, and the failure/edge paths (timeouts,
   duplicates, opt-out, low AI confidence, missing data).
@@ -99,6 +101,7 @@ cross-tenant cases are present, not just the sunny path.
 new value objects, and the invariants that must hold.
 
 **Guidance:**
+
 - List the **owning context** and any **collaborating contexts** (with the relationship:
   upstream/downstream/customer-supplier per `ARCHITECTURE.md §3`).
 - For each aggregate touched: name it, state whether it is created/mutated, and confirm a single
@@ -120,6 +123,7 @@ do). Invariants are testable assertions, not prose.
 **What:** Prisma model changes, the migration, tenancy, indexes, and RLS.
 
 **Guidance:**
+
 - Describe Prisma model additions/changes in `packages/database` (new models, fields, enums,
   relations). Show the model sketch.
 - **Every tenant-scoped model MUST include `organizationId`** and be registered with the tenant
@@ -142,6 +146,7 @@ RLS; every query pattern in Section 5/7 has a supporting index; uniqueness is te
 **What:** The endpoints (REST/WS) and the **`packages/contracts`** zod schemas that define them.
 
 **Guidance:**
+
 - List each endpoint: method, path, auth/role (CASL `(action, subject)`), request/response
   shape, error model (RFC-7807 problem-details), pagination for lists.
 - Define request/response DTOs and any shared enums/ids as **zod schemas in
@@ -163,6 +168,7 @@ exists. Every list is paginated, every endpoint has explicit auth, every respons
 **What:** New/changed domain events this feature emits or consumes, per the event catalog.
 
 **Guidance:**
+
 - Use the naming rule `<context>.<aggregate>.<pastTenseFact>.v<major>` — facts, past tense,
   immutable, versioned (`ARCHITECTURE.md §8`).
 - For each **emitted** event: name, version, payload schema (zod in `packages/contracts`,
@@ -186,6 +192,7 @@ catalog is updated.
 naming the exact folders from `REPOSITORY_STRUCTURE.md`.
 
 **Guidance — respect the dependency rule (`CLEAN_ARCHITECTURE.md §1`); dependencies point inward:**
+
 - **Domain** (`contexts/<c>/domain/`): new/changed entities, VOs, domain services, **port
   interfaces**, and domain events. Pure — zero `@nestjs`/Prisma/SDK/`process.env`.
 - **Application** (`contexts/<c>/application/`): command/query/event handlers, the transaction +
@@ -210,6 +217,7 @@ import appears.
 **What:** The Next.js feature-first slice and the components/clients it uses.
 
 **Guidance:**
+
 - Name the route(s) under `apps/web/app/(client|admin)/...` and the feature slice under
   `apps/web/features/<feature>/` (components, hooks, feature **api-client**, zod schemas — the
   schemas re-used from `packages/contracts`).
@@ -230,6 +238,7 @@ is typed end-to-end from `contracts`, and renders live updates via the tenant-sc
 **What:** Queues, S3, Redis keys, third-party config, and IaC needed to run the feature.
 
 **Guidance:**
+
 - **Queues (BullMQ):** new queues/processors, concurrency, per-tenant rate limits, retry/backoff,
   DLQ. Every job payload carries `organizationId`.
 - **S3:** buckets/prefixes — always tenant-prefixed `s3://bucket/org/{id}/...`; signed,
@@ -251,6 +260,7 @@ every new env var is validated config; rate limits protect provider quotas and n
 **What:** The test plan across levels, including the **mandatory cross-tenant test**.
 
 **Guidance:**
+
 - **Unit** (domain): pure tests of VOs, invariants, domain services, scoring/assignment — no
   mocks of frameworks.
 - **Integration** (application + infra): use-case handlers against a real DB (testcontainers),
@@ -274,6 +284,7 @@ handler is tested.
 **What:** Which `docs/` files change, and whether an ADR is required.
 
 **Guidance:**
+
 - List the docs to update: `EVENT_CATALOG.md` (any event change — required), `API_CONTRACTS.md`
   (any endpoint change), `DOMAIN_RULES.md` (new aggregate/VO/invariant), `REPOSITORY_STRUCTURE.md`
   (new module/folder), `ENGINEERING_STANDARDS.md`, runbooks (`runbooks/`) for new operational
@@ -293,6 +304,7 @@ ADR; the event catalog and API contracts never drift from code.
 **What:** The observability to know the feature works and to debug it when it doesn't.
 
 **Guidance:**
+
 - **CloudWatch metrics:** business + technical counters/timers (e.g. messages processed, leads
   created, AI confidence distribution, turn latency p95), dimensioned by `organizationId` where
   cardinality allows.
@@ -315,6 +327,7 @@ itself alarmed (it must never be silently dropped).
 **What:** How to turn it off / roll it back safely without data loss or stuck tenants.
 
 **Guidance:**
+
 - **Feature flag:** the feature ships behind a Platform-Ops feature flag (per-org where it makes
   sense), default-off, with a documented enable/disable procedure.
 - **Migration reversibility:** the Section-4 migration is reversible, or follows expand/contract
@@ -336,6 +349,7 @@ migration in a single step; no event change that breaks an existing consumer.
 **What:** The binary checklist that gates merge/release.
 
 **Guidance — the feature is Done only when ALL hold:**
+
 - [ ] Spec approved and kept current; status set to `Shipped`.
 - [ ] All acceptance scenarios (Section 2) implemented and passing as tests.
 - [ ] Layer boundaries respected; `pnpm boundaries`, domain-purity grep, and
@@ -362,15 +376,17 @@ These are the failure modes the blueprint exists to prevent. They are **build fa
 style preferences (`CLEAN_ARCHITECTURE.md §5`).
 
 **Do:**
+
 - Keep `domain/` pure: no `@nestjs`, `@prisma`, `bullmq`, `ioredis`, `aws-sdk`, `axios`,
   `process.env`. Inject a clock port instead of `Date.now()` in business logic.
 - Define ports in `domain/`; implement adapters in `infrastructure/`; wire in the module file.
-- Cross a context boundary with **IDs and events only** — call the other context's *published*
+- Cross a context boundary with **IDs and events only** — call the other context's _published_
   application interface for queries, emit an event for side effects.
 - Carry `organizationId` on every row, cache key, queue job, S3 object, and vector query.
 - Map domain aggregates to DTOs (`packages/contracts`) before returning over HTTP/WS.
 
 **Never (anti-patterns — each maps to a `CLEAN_ARCHITECTURE.md` violation):**
+
 - **No cross-context table access.** `contexts/campaign` must not `prisma.lead.findMany()` — that
   is CRM's table. Use CRM's published query or consume `crm.lead.created.v1` (Violation B).
 - **No synchronous cross-context side-effect calls.** `CreateLead` must not call

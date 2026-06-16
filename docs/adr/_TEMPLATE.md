@@ -15,7 +15,7 @@
 ## Context
 
 What forces are at play? State the problem, the constraints (product, PRD, regulatory,
-team, time, cost), and *why a decision is needed now*. Be concrete and reference the
+team, time, cost), and _why a decision is needed now_. Be concrete and reference the
 relevant section of [`ARCHITECTURE.md`](../ARCHITECTURE.md),
 [`DOMAIN_RULES.md`](../DOMAIN_RULES.md), [`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md),
 or [`CLEAN_ARCHITECTURE.md`](../CLEAN_ARCHITECTURE.md). A reader six months from now should
@@ -30,7 +30,7 @@ records a commitment, not a discussion.
 
 ## Consequences
 
-The results of the decision — *both* good and bad. What becomes easy? What becomes harder?
+The results of the decision — _both_ good and bad. What becomes easy? What becomes harder?
 What new obligations, risks, or follow-up work does this create (migrations, lint rules,
 tests, runbooks)? Name the trade-offs we are knowingly accepting so nobody relitigates them
 without new information.
@@ -41,12 +41,12 @@ without new information.
 
 ## Alternatives considered
 
-For each rejected option: a one-line description and *why it lost*. A comparison table is
+For each rejected option: a one-line description and _why it lost_. A comparison table is
 encouraged when the trade-off space is multi-dimensional.
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| … | … | … | ❌ rejected — <reason> |
+| Option | Pros | Cons | Verdict                |
+| ------ | ---- | ---- | ---------------------- |
+| …      | …    | …    | ❌ rejected — <reason> |
 
 ## Related
 

@@ -16,30 +16,30 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
 
 **Scope summary**
 
-| Tier | What | When |
-|---|---|---|
-| **MVP (Weeks 1–12)** | Platform skeleton, IAM/tenancy, Org+templates, KB ingestion+RAG, AI Employee, **WhatsApp + Website chat** inbound, Conversation Engine, CRM + qualification + scoring + assignment, Appointments, Notifications, basic Analytics, client + admin dashboards, **inbound voice (basic)** | Weeks 1–12 |
-| **Phase 2 (Weeks 13–24)** | Outbound campaign engine, follow-up engine, advanced voice (realtime, interruptions, transfer), transcript intelligence/search, full multilingual + code-switching, Meta/Google lead-form + CSV import, richer analytics (CPL/ROAS) | post-MVP |
-| **Future enterprise** | Service extraction (voice first), data warehouse/BI, public self-serve + billing, new verticals via templates, advanced ABAC, SSO/SCIM, on-shore data residency options | later |
+| Tier                      | What                                                                                                                                                                                                                                                                                   | When       |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| **MVP (Weeks 1–12)**      | Platform skeleton, IAM/tenancy, Org+templates, KB ingestion+RAG, AI Employee, **WhatsApp + Website chat** inbound, Conversation Engine, CRM + qualification + scoring + assignment, Appointments, Notifications, basic Analytics, client + admin dashboards, **inbound voice (basic)** | Weeks 1–12 |
+| **Phase 2 (Weeks 13–24)** | Outbound campaign engine, follow-up engine, advanced voice (realtime, interruptions, transfer), transcript intelligence/search, full multilingual + code-switching, Meta/Google lead-form + CSV import, richer analytics (CPL/ROAS)                                                    | post-MVP   |
+| **Future enterprise**     | Service extraction (voice first), data warehouse/BI, public self-serve + billing, new verticals via templates, advanced ABAC, SSO/SCIM, on-shore data residency options                                                                                                                | later      |
 
-> **Critical sequencing note:** the PRD's marquee feature ("AI so natural buyers ask *was that
-> a person?*") is **realtime outbound voice**, which is the highest-risk, highest-latency
+> **Critical sequencing note:** the PRD's marquee feature ("AI so natural buyers ask _was that
+> a person?_") is **realtime outbound voice**, which is the highest-risk, highest-latency
 > component. We deliberately ship **text channels + inbound voice** in the MVP to validate the
-> AI Employee brain, RAG grounding, and CRM loop *first*, then invest in realtime voice in
+> AI Employee brain, RAG grounding, and CRM loop _first_, then invest in realtime voice in
 > Phase 2 once the reasoning/grounding/eval foundation is proven. See risks below.
 
 ---
 
 ## Phase 0 — Foundations (Week 1–2)
 
-- **Goals:** a deployable skeleton with the architecture's guardrails *live* before any
+- **Goals:** a deployable skeleton with the architecture's guardrails _live_ before any
   feature code, so boundaries can't rot.
 - **Features / deliverables:**
   - Monorepo bootstrap: Turborepo + pnpm workspaces, `tsconfig.base`, `turbo.json`.
   - `packages/`: `domain-kernel` (OrganizationId, Money, E164Phone, Result, base AggregateRoot/
     DomainEvent), `contracts` (zod skeleton), `config` (env validation), `database` (Prisma init
-    + tenant middleware skeleton + RLS scaffolding), `observability`, `eslint-config` (with
-    boundary rules), `ui` (shadcn init), `testing`.
+    - tenant middleware skeleton + RLS scaffolding), `observability`, `eslint-config` (with
+      boundary rules), `ui` (shadcn init), `testing`.
   - `apps/api` NestJS skeleton with `shared/` (tenant context, guards, event bus, **outbox**),
     empty context modules registered.
   - `apps/web` Next.js skeleton (App Router, route groups, auth-accept shell).
@@ -69,7 +69,7 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
 - **Folder locations:** `contexts/iam`, `contexts/organization`, `contexts/platform-ops`,
   `shared/` guards/middleware, `packages/database` (RLS policies), `apps/web/app/(auth)` + `(admin)`.
 - **Docs to update:** `SECURITY_GUIDELINES` (verify), `API_CONTRACTS` (auth/org endpoints),
-  `EVENT_CATALOG` (iam.*/org.* events), ADR-0001/0003 confirmations.
+  `EVENT_CATALOG` (iam._/org._ events), ADR-0001/0003 confirmations.
 - **Testing:** **cross-tenant access tests are mandatory and blocking**; RBAC policy unit
   tests; invitation token lifecycle tests; e2e login/accept-invite.
 - **Risks:** tenant-leak bug. Mitigation: defense-in-depth + CI isolation suite from day one.
@@ -85,7 +85,7 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
 - **Dependencies:** Phase 0–1 (tenant scoping for chunks/embeddings).
 - **Folder locations:** `contexts/knowledge-base`, `apps/workers/src/processors` (ingest,
   embed), `apps/web/features/knowledge-base`, S3 prefixes `org/{id}/...`.
-- **Docs to update:** `EVENT_CATALOG` (kb.*), `PERFORMANCE_GUIDELINES` (pgvector/embedding
+- **Docs to update:** `EVENT_CATALOG` (kb.\*), `PERFORMANCE_GUIDELINES` (pgvector/embedding
   batching), feature-spec.
 - **Testing:** ingestion idempotency (no duplicate chunks), tenant-filtered retrieval test,
   retrieval relevance smoke eval set.
@@ -99,12 +99,12 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
 - **Features:** AI Employee config (identity/personality/permitted actions/escalation/goals);
   PromptAssembler + ReasoningOrchestrator (LLM port) + ActionDispatcher (grant-checked);
   Conversation Engine (timeline, identity resolution, control state); **Website Chat** channel
-  + WebSocket live updates; action set wired to events (CreateLead/SearchKnowledge/SearchCRM/
-  Escalate); confidence-based escalation/handoff.
+  - WebSocket live updates; action set wired to events (CreateLead/SearchKnowledge/SearchCRM/
+    Escalate); confidence-based escalation/handoff.
 - **Dependencies:** Phase 1–2.
 - **Folder locations:** `contexts/ai-employee`, `contexts/conversation`, `contexts/channels`,
   `apps/web/features/conversations` + `ai-employee`, WS gateway in `apps/api`.
-- **Docs to update:** `EVENT_CATALOG` (conversation.*, ai.*), `API_CONTRACTS` (WS contract),
+- **Docs to update:** `EVENT_CATALOG` (conversation._, ai._), `API_CONTRACTS` (WS contract),
   `AI_AGENT_GUIDELINES`, feature-spec.
 - **Testing:** deterministic prompt-assembly unit tests; reasoning orchestrator with a stubbed
   LLM; identity-resolution merge/no-false-merge tests; e2e website chat conversation.
@@ -122,7 +122,7 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
   AI actions; lead/contact dashboards.
 - **Dependencies:** Phase 3 (events from conversation/AI).
 - **Folder locations:** `contexts/crm`, `contexts/qualification`, `apps/web/features/leads`.
-- **Docs to update:** `EVENT_CATALOG` (crm.*, qualification.*, leadscore.*), `DOMAIN_RULES`
+- **Docs to update:** `EVENT_CATALOG` (crm._, qualification._, leadscore.\*), `DOMAIN_RULES`
   confirmations, feature-spec.
 - **Testing:** scoring engine pure unit tests + explainability; assignment fallback test
   (guarantee no unassigned); pipeline transition legality tests.
@@ -140,7 +140,7 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
 - **Folder locations:** `contexts/appointments`, `contexts/notifications`,
   `contexts/channels` (WhatsApp adapter), `apps/web/features/appointments`, workers (reminders,
   notification delivery).
-- **Docs to update:** `EVENT_CATALOG` (appointments.*, notifications.*), `SECURITY_GUIDELINES`
+- **Docs to update:** `EVENT_CATALOG` (appointments._, notifications._), `SECURITY_GUIDELINES`
   (WhatsApp webhook signatures), feature-spec `0001` realized.
 - **Testing:** webhook signature verification tests; no double-booking; reminder scheduling
   reliability; e2e WhatsApp → lead → booked visit → confirmation.
@@ -156,25 +156,26 @@ shipped capabilities. Folder locations reference [`REPOSITORY_STRUCTURE.md`](REP
   provision pipeline/AI employee/questions/follow-up/notifications/dashboards/campaign
   templates/appointment rules via the template saga; onboarding wizard; **inbound voice
   (basic)**: Twilio number → Deepgram STT → AI reasoning → ElevenLabs TTS, in `apps/voice-
-  gateway`, with recording → transcript → summary → CRM auto-update (async); Analytics v1
+gateway`, with recording → transcript → summary → CRM auto-update (async); Analytics v1
   (leads captured, conversations, appointments, conversion, response time, hot leads, agent
   perf) via read models.
 - **Dependencies:** all prior phases.
 - **Folder locations:** `contexts/organization` (templates/onboarding), `apps/voice-gateway`,
   `contexts/voice` + `contexts/calls`, `contexts/analytics`, `apps/web/features/onboarding` +
   `analytics`, workers (transcription, summary, analytics projections).
-- **Docs to update:** `EVENT_CATALOG` (calls.*, analytics), `PERFORMANCE_GUIDELINES` (voice
+- **Docs to update:** `EVENT_CATALOG` (calls.\*, analytics), `PERFORMANCE_GUIDELINES` (voice
   latency), `DEPLOYMENT_GUIDE` (voice-gateway specifics), ADR-0005 realized, feature-specs.
 - **Testing:** template-application idempotency/saga re-drive; voice call e2e (inbound) with
   latency measurement; transcript/summary→CRM mapping tests; analytics projection rebuild test.
-- **Risks:** **voice latency/quality** (top risk). Mitigation: scope MVP voice to *inbound,
-  near-realtime* with strict latency telemetry; treat full realtime barge-in as Phase 2;
+- **Risks:** **voice latency/quality** (top risk). Mitigation: scope MVP voice to _inbound,
+  near-realtime_ with strict latency telemetry; treat full realtime barge-in as Phase 2;
   fallback to human handoff.
 - **DoD:** Ops can stand up a new client org from a template, upload docs, connect WhatsApp +
   a phone number, and go live in < 30 min; an inbound call is handled, recorded, transcribed,
   summarized, and updates the CRM; the client sees analytics.
 
 ### ⛳ MVP COMPLETE (end of Week 12)
+
 Inbound is fully autonomous across **website chat + WhatsApp + basic voice**, grounded in KB,
 producing scored/assigned leads, booked site visits, notifications, and analytics — deployable
 by our Ops team for a real client. This validates the brain + grounding + CRM loop before the
@@ -184,16 +185,16 @@ higher-risk outbound/realtime investment.
 
 ## Phase 2 Enhancements (Weeks 13–24)
 
-| Theme | Features | Key dependencies | Folders |
-|---|---|---|---|
-| **Outbound Campaign Engine** | Campaigns, lead-list import (Meta/Google/CSV/API), dedup, enrich, segmentation, outreach orchestration, opt-out/DNC, per-tenant rate limiting | CRM, AI Employee, Channels, Conversation dedup | `contexts/campaign`, workers |
-| **Follow-Up Engine** | Configurable rules (no-response/interested/scheduled/missed/viewed/cold), schedule + fire, stop on convert/opt-out | Campaign, Appointments, Notifications | `contexts/campaign` |
-| **Advanced Realtime Voice** | Streaming STT partials → LLM → streaming TTS, barge-in/interruptions, human transfer, <1.2s p95 | voice-gateway, OpenAI Realtime | `apps/voice-gateway`, `contexts/voice` |
-| **Transcript Intelligence** | Speaker separation, keyword extraction, transcript search ("3 BHK Hyderabad", "budget > ₹1cr") via FTS, versioning, download | Calls | `contexts/calls`, workers |
-| **Full Multilingual** | 10 languages + code-switching detection/switching, per-language model routing, eval sets | AI Employee LanguageRouter | `contexts/ai-employee` |
-| **Analytics v2** | Campaign perf, lead sources, sentiment distribution, **CPL/ROAS**, site-visit conversion | usage/cost events from Phase 0 | `contexts/analytics` |
+| Theme                        | Features                                                                                                                                      | Key dependencies                               | Folders                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- |
+| **Outbound Campaign Engine** | Campaigns, lead-list import (Meta/Google/CSV/API), dedup, enrich, segmentation, outreach orchestration, opt-out/DNC, per-tenant rate limiting | CRM, AI Employee, Channels, Conversation dedup | `contexts/campaign`, workers           |
+| **Follow-Up Engine**         | Configurable rules (no-response/interested/scheduled/missed/viewed/cold), schedule + fire, stop on convert/opt-out                            | Campaign, Appointments, Notifications          | `contexts/campaign`                    |
+| **Advanced Realtime Voice**  | Streaming STT partials → LLM → streaming TTS, barge-in/interruptions, human transfer, <1.2s p95                                               | voice-gateway, OpenAI Realtime                 | `apps/voice-gateway`, `contexts/voice` |
+| **Transcript Intelligence**  | Speaker separation, keyword extraction, transcript search ("3 BHK Hyderabad", "budget > ₹1cr") via FTS, versioning, download                  | Calls                                          | `contexts/calls`, workers              |
+| **Full Multilingual**        | 10 languages + code-switching detection/switching, per-language model routing, eval sets                                                      | AI Employee LanguageRouter                     | `contexts/ai-employee`                 |
+| **Analytics v2**             | Campaign perf, lead sources, sentiment distribution, **CPL/ROAS**, site-visit conversion                                                      | usage/cost events from Phase 0                 | `contexts/analytics`                   |
 
-**Outbound DoD gate:** consent/DNC/recording-compliance handling must ship *with* outbound
+**Outbound DoD gate:** consent/DNC/recording-compliance handling must ship _with_ outbound
 calling, not after (see `PRD_REVIEW.md` and `SECURITY_GUIDELINES.md`).
 
 ---

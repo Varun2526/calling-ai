@@ -47,9 +47,9 @@ describe('loadConfig', () => {
   });
 
   it('rejects malformed values (bad URL, non-numeric port)', () => {
-    expect(() =>
-      loadConfig({ ...validEnv, DATABASE_URL: 'not-a-url', API_PORT: 'abc' }),
-    ).toThrow(ConfigValidationError);
+    expect(() => loadConfig({ ...validEnv, DATABASE_URL: 'not-a-url', API_PORT: 'abc' })).toThrow(
+      ConfigValidationError,
+    );
   });
 
   it('requires provider secrets in production', () => {

@@ -15,7 +15,7 @@ monorepo. We deliberately reject a microservices-first design for V1. The reason
 trade-offs, and the exact rule for when we extract a service are in
 [ADR-0002](adr/0002-modular-monolith-over-microservices.md). Every bounded context is a
 **NestJS module with a hard, lint-enforced boundary** so that any context can later be lifted
-into its own deployable service *without a rewrite* — the seams are designed in from day one.
+into its own deployable service _without a rewrite_ — the seams are designed in from day one.
 
 Three non-negotiable invariants govern everything below:
 
@@ -78,12 +78,12 @@ Three non-negotiable invariants govern everything below:
 
 **Deployable units (ECS Fargate services):**
 
-| Service | Responsibility | Scaling signal |
-|---|---|---|
-| `apps/web` | Next.js dashboards (client + admin) | CPU / request count |
-| `apps/api` | REST + WebSocket gateway, all synchronous domain operations | CPU / p95 latency |
-| `apps/voice-gateway` | Long-lived voice/media sessions, realtime STT↔LLM↔TTS loop | concurrent active calls |
-| `apps/workers` | All async work (queues). One image, multiple queue-bound process types | queue depth per queue |
+| Service              | Responsibility                                                         | Scaling signal          |
+| -------------------- | ---------------------------------------------------------------------- | ----------------------- |
+| `apps/web`           | Next.js dashboards (client + admin)                                    | CPU / request count     |
+| `apps/api`           | REST + WebSocket gateway, all synchronous domain operations            | CPU / p95 latency       |
+| `apps/voice-gateway` | Long-lived voice/media sessions, realtime STT↔LLM↔TTS loop             | concurrent active calls |
+| `apps/workers`       | All async work (queues). One image, multiple queue-bound process types | queue depth per queue   |
 
 Voice is split out from `apps/api` from day one because its runtime profile is
 fundamentally different (long-lived stateful WebSocket/media sessions, latency-critical,
@@ -118,29 +118,29 @@ These map 1:1 to bounded contexts (next section) and to NestJS modules (Phase 3)
 We classify each context using DDD's core/supporting/generic distinction. This drives where
 we invest senior engineering effort vs. where we buy/standardize.
 
-| # | Bounded Context | Class | Why |
-|---|---|---|---|
-| BC-1 | **AI Employee** | **Core** | The product *is* "human-like AI employees". Differentiation lives here. |
-| BC-2 | **Conversation Engine** | **Core** | Unified cross-channel memory/timeline is the moat. |
-| BC-3 | **Voice / Telephony** | **Core** | "Was that a person or AI?" — realtime voice quality is core. |
-| BC-4 | **Campaign Engine** | **Core** | Outbound autonomous outreach + follow-up is a primary revenue driver. |
-| BC-5 | **Knowledge Base** | Supporting | RAG quality matters but uses standard patterns. |
-| BC-6 | **CRM** | Supporting | Table-stakes but specific to real-estate pipeline. |
-| BC-7 | **Lead Qualification & Scoring** | Supporting | Configurable rules + scoring; bespoke but bounded. |
-| BC-8 | **Appointments** | Supporting | Domain-specific scheduling rules. |
-| BC-9 | **Organization & Onboarding** | Supporting | The templates engine is differentiating; rest is config. |
-| BC-10 | **Channels** | Generic-ish | Adapters around 3rd-party APIs. |
-| BC-11 | **IAM** | Generic | Standard RBAC/tenancy — minimize custom code. |
-| BC-12 | **Notifications** | Generic | Standard fan-out delivery. |
-| BC-13 | **Analytics** | Generic | Read-model aggregation. |
-| BC-14 | **Platform Ops / Admin** | Generic | Cross-cutting tooling. |
+| #     | Bounded Context                  | Class       | Why                                                                     |
+| ----- | -------------------------------- | ----------- | ----------------------------------------------------------------------- |
+| BC-1  | **AI Employee**                  | **Core**    | The product _is_ "human-like AI employees". Differentiation lives here. |
+| BC-2  | **Conversation Engine**          | **Core**    | Unified cross-channel memory/timeline is the moat.                      |
+| BC-3  | **Voice / Telephony**            | **Core**    | "Was that a person or AI?" — realtime voice quality is core.            |
+| BC-4  | **Campaign Engine**              | **Core**    | Outbound autonomous outreach + follow-up is a primary revenue driver.   |
+| BC-5  | **Knowledge Base**               | Supporting  | RAG quality matters but uses standard patterns.                         |
+| BC-6  | **CRM**                          | Supporting  | Table-stakes but specific to real-estate pipeline.                      |
+| BC-7  | **Lead Qualification & Scoring** | Supporting  | Configurable rules + scoring; bespoke but bounded.                      |
+| BC-8  | **Appointments**                 | Supporting  | Domain-specific scheduling rules.                                       |
+| BC-9  | **Organization & Onboarding**    | Supporting  | The templates engine is differentiating; rest is config.                |
+| BC-10 | **Channels**                     | Generic-ish | Adapters around 3rd-party APIs.                                         |
+| BC-11 | **IAM**                          | Generic     | Standard RBAC/tenancy — minimize custom code.                           |
+| BC-12 | **Notifications**                | Generic     | Standard fan-out delivery.                                              |
+| BC-13 | **Analytics**                    | Generic     | Read-model aggregation.                                                 |
+| BC-14 | **Platform Ops / Admin**         | Generic     | Cross-cutting tooling.                                                  |
 
 **Context map (relationships):**
 
 - IAM is **upstream** of everything (shared kernel for `OrganizationId`, `UserId`, `Role`).
 - Conversation Engine is the **hub**; Channels are upstream adapters that feed it.
-- AI Employee is invoked **by** Conversation Engine and Voice as a *domain service*; it
-  *queries* Knowledge Base (customer/supplier) and *commands* CRM/Appointments/Notifications
+- AI Employee is invoked **by** Conversation Engine and Voice as a _domain service_; it
+  _queries_ Knowledge Base (customer/supplier) and _commands_ CRM/Appointments/Notifications
   via its action set — but does so by **emitting intents/events**, never by reaching into
   their tables.
 - Campaign Engine is a **consumer** of CRM (lead lists), AI Employee (outreach), Conversation
@@ -156,7 +156,7 @@ Canonical terms (full glossary + invariants in [`DOMAIN_RULES.md`](DOMAIN_RULES.
 
 - **Organization** — the tenant. Synonymous with "client/business". Root of all data ownership.
 - **Contact** — a real-world person (buyer/prospect), deduplicated across channels via identity resolution.
-- **Lead** — a *sales opportunity* attached to a Contact within a pipeline. A Contact may have multiple Leads over time. (Contact ≠ Lead — see DOMAIN_RULES.)
+- **Lead** — a _sales opportunity_ attached to a Contact within a pipeline. A Contact may have multiple Leads over time. (Contact ≠ Lead — see DOMAIN_RULES.)
 - **Conversation** — a channel-spanning thread of interaction with one Contact. Has a unified **Timeline**.
 - **Message** — a single utterance/turn within a Conversation (inbound or outbound, any channel).
 - **AI Employee** — a configured autonomous agent instance owned by an Organization. Has identity, personality, knowledge bindings, permitted actions, goals, escalation rules.
@@ -188,24 +188,24 @@ Canonical terms (full glossary + invariants in [`DOMAIN_RULES.md`](DOMAIN_RULES.
 
 ## 6. Data Ownership Rules
 
-| Data | Owning context | Notes |
-|---|---|---|
-| Organizations, Users, Roles, Invitations, Sessions | IAM | Shared-kernel IDs; everyone reads `organizationId` via auth context, not via the users table. |
-| Org config, templates, onboarding state | Organization | |
-| Knowledge sources, documents, chunks, **embeddings (pgvector)** | Knowledge Base | Embeddings live in KB-owned tables. |
-| AI Employee configs, prompts, personality, action grants | AI Employee | |
-| Conversations, Messages, Timeline, identity-resolution graph | Conversation Engine | Single source of truth for "what was said". |
-| Contacts, Leads, Pipeline stages, Activities, Assignments | CRM | |
-| Qualification question sets, lead scores | Lead Qualification | Score is *projected onto* the Lead via event, CRM stores a denormalized copy. |
-| Calls, recordings (S3 keys), transcripts, summaries, sentiment | Calls | |
-| Campaigns, lead lists, segments, outreach attempts, follow-up rules/state | Campaign Engine | |
-| Appointments, reminders, calendar links | Appointments | |
-| Notification rules, delivery records | Notifications | |
-| Read models / aggregates / dashboards | Analytics | **Read-only** copies built from events. Never authoritative. |
-| Audit log, feature flags, system health | Platform Ops | Append-only audit. |
+| Data                                                                      | Owning context      | Notes                                                                                         |
+| ------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------- |
+| Organizations, Users, Roles, Invitations, Sessions                        | IAM                 | Shared-kernel IDs; everyone reads `organizationId` via auth context, not via the users table. |
+| Org config, templates, onboarding state                                   | Organization        |                                                                                               |
+| Knowledge sources, documents, chunks, **embeddings (pgvector)**           | Knowledge Base      | Embeddings live in KB-owned tables.                                                           |
+| AI Employee configs, prompts, personality, action grants                  | AI Employee         |                                                                                               |
+| Conversations, Messages, Timeline, identity-resolution graph              | Conversation Engine | Single source of truth for "what was said".                                                   |
+| Contacts, Leads, Pipeline stages, Activities, Assignments                 | CRM                 |                                                                                               |
+| Qualification question sets, lead scores                                  | Lead Qualification  | Score is _projected onto_ the Lead via event, CRM stores a denormalized copy.                 |
+| Calls, recordings (S3 keys), transcripts, summaries, sentiment            | Calls               |                                                                                               |
+| Campaigns, lead lists, segments, outreach attempts, follow-up rules/state | Campaign Engine     |                                                                                               |
+| Appointments, reminders, calendar links                                   | Appointments        |                                                                                               |
+| Notification rules, delivery records                                      | Notifications       |                                                                                               |
+| Read models / aggregates / dashboards                                     | Analytics           | **Read-only** copies built from events. Never authoritative.                                  |
+| Audit log, feature flags, system health                                   | Platform Ops        | Append-only audit.                                                                            |
 
 **Rule:** if two contexts seem to "need the same table", one of them is wrong about ownership.
-Resolve by deciding who owns the *write authority*; the other gets a read model via events.
+Resolve by deciding who owns the _write authority_; the other gets a read model via events.
 
 ---
 
@@ -260,15 +260,15 @@ channels.message.received.v1
 
 ## 9. Synchronous vs Asynchronous Workflows
 
-| Synchronous (request/response, user is waiting) | Asynchronous (queued, eventually consistent) |
-|---|---|
-| Auth, RBAC checks | Knowledge ingestion (extract→chunk→embed→index) |
-| CRUD on org/AI-employee config | Embedding generation / re-indexing |
-| Loading dashboards, lead lists, a conversation timeline | Transcription, AI summary, sentiment, CRM auto-update |
-| KB/CRM **search** during a live conversation (must be fast: cache + pgvector) | Campaign execution, outbound call/WhatsApp dispatch |
-| Posting a chat message (then async fan-out) | Follow-up scheduling and firing |
-| Booking/rescheduling an appointment (the write) | Notification delivery, reminders |
-| Voice realtime loop (low-latency, but a special "online async" pipeline) | Analytics aggregation, CSV/lead-list import & dedup |
+| Synchronous (request/response, user is waiting)                               | Asynchronous (queued, eventually consistent)          |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Auth, RBAC checks                                                             | Knowledge ingestion (extract→chunk→embed→index)       |
+| CRUD on org/AI-employee config                                                | Embedding generation / re-indexing                    |
+| Loading dashboards, lead lists, a conversation timeline                       | Transcription, AI summary, sentiment, CRM auto-update |
+| KB/CRM **search** during a live conversation (must be fast: cache + pgvector) | Campaign execution, outbound call/WhatsApp dispatch   |
+| Posting a chat message (then async fan-out)                                   | Follow-up scheduling and firing                       |
+| Booking/rescheduling an appointment (the write)                               | Notification delivery, reminders                      |
+| Voice realtime loop (low-latency, but a special "online async" pipeline)      | Analytics aggregation, CSV/lead-list import & dedup   |
 
 **Rule of thumb:** if it touches a third party with variable latency, can be retried, or
 isn't needed to render the user's current screen — it's a queue job. The voice realtime loop
@@ -282,20 +282,21 @@ is the one latency-critical "streaming" exception and lives in voice-gateway.
 Postgres Row-Level Security + a Prisma tenant-scoping middleware + an application tenant
 guard.** Compared alternatives in [ADR-0001](adr/0001-multi-tenancy-shared-schema-rls.md):
 
-| Option | Isolation | Ops cost | Cross-tenant analytics | Verdict |
-|---|---|---|---|---|
-| DB per tenant | Strongest | High (migrations × N, connection sprawl) | Hard | ❌ premature for an internally-managed V1 |
-| Schema per tenant | Strong | Medium-high (migration fan-out) | Medium | ❌ same migration pain, marginal gain |
-| **Shared schema + RLS** | Strong *if enforced in depth* | Low | Easy | ✅ **chosen** |
+| Option                  | Isolation                     | Ops cost                                 | Cross-tenant analytics | Verdict                                   |
+| ----------------------- | ----------------------------- | ---------------------------------------- | ---------------------- | ----------------------------------------- |
+| DB per tenant           | Strongest                     | High (migrations × N, connection sprawl) | Hard                   | ❌ premature for an internally-managed V1 |
+| Schema per tenant       | Strong                        | Medium-high (migration fan-out)          | Medium                 | ❌ same migration pain, marginal gain     |
+| **Shared schema + RLS** | Strong _if enforced in depth_ | Low                                      | Easy                   | ✅ **chosen**                             |
 
 **Defense in depth (all three required):**
+
 1. **App guard** derives `organizationId` from the authenticated session (never from request
    body) and binds it to a request-scoped tenant context.
 2. **Prisma middleware** auto-injects `where: { organizationId }` on every query for
    tenant-scoped models and rejects writes lacking it.
 3. **Postgres RLS** policies key off a `SET app.current_org` GUC per connection/transaction —
    the final backstop if app code has a bug. Super-admin uses a separate role that can bypass
-   RLS *only* through audited admin endpoints.
+   RLS _only_ through audited admin endpoints.
 
 Tenant scoping extends to: **Redis keys** (`org:{id}:...`), **BullMQ job data** (every job
 carries `organizationId`), **S3 prefixes** (`s3://bucket/org/{id}/...`), and **pgvector
@@ -314,11 +315,11 @@ without its id.
 - We model permissions as `(action, subject)` pairs (e.g. `update:Lead`, `read:Analytics`,
   `manage:Organization`) and evaluate with a policy layer (**CASL**-style ability), not
   scattered `if (role === ...)` checks. See [ADR-0003](adr/0003-rbac-casl-policy-layer.md).
-- **Platform vs tenant roles:** Super Admin / Operations Admin are *platform* roles spanning
+- **Platform vs tenant roles:** Super Admin / Operations Admin are _platform_ roles spanning
   orgs (and are the only ones that may cross tenant boundaries, through audited endpoints).
-  Client Owner…Support are *tenant* roles scoped to one org.
+  Client Owner…Support are _tenant_ roles scoped to one org.
 - **Resource ownership refinements:** a Sales Executive can read all leads in their org but
-  may only *modify* leads assigned to them (configurable per org). Assignment rules feed this.
+  may only _modify_ leads assigned to them (configurable per org). Assignment rules feed this.
 - Every authorization decision on sensitive resources is **audit-logged** (Platform Ops).
 
 ABAC was considered for the assignment-based rules; we keep RBAC as the spine and express the
@@ -329,7 +330,7 @@ few attribute rules (e.g. "assigned-to-me") as policy conditions — full ABAC i
 ## 12. Scalability Considerations
 
 - **Stateless api/web/workers** → horizontal scale on ECS Fargate behind ALB. No in-memory
-  session state (sessions in Redis/JWT). 
+  session state (sessions in Redis/JWT).
 - **voice-gateway** scales on **concurrent active calls**; sessions are sticky to a task for
   their lifetime, with state checkpointed to Redis so a draining task can hand off.
 - **Queues as shock absorbers:** spikes (a 50k-lead campaign import, a webhook storm) land in
@@ -385,16 +386,16 @@ few attribute rules (e.g. "assigned-to-me") as policy conditions — full ABAC i
 
 ## 15. Risks & Trade-offs (top architectural risks)
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| **Voice latency/quality** doesn't hit "is it human?" bar | Core value prop fails | Dedicated voice-gateway, streaming pipeline, strict latency SLOs, fallback to human handoff |
-| **Modular monolith boundaries erode** into a big ball of mud | Future service extraction impossible | Lint-enforced import boundaries, no cross-context table access, ADR discipline (Phase 4) |
-| **Multi-tenant data leak** | Catastrophic / legal | Defense-in-depth (guard+middleware+RLS) + CI cross-tenant tests |
-| **Third-party cost & rate limits** (OpenAI/Twilio/ElevenLabs/WhatsApp) | Cost blowup, throttling | Per-tenant rate limiting, caching, cost telemetry (CPL/ROAS), provider abstraction to swap vendors |
-| **LLM nondeterminism / hallucination** giving wrong property/price info | Trust + legal | RAG grounding + citations, guardrails, confidence-based escalation, eval harness on KB answers |
-| **Regional language + code-switching** quality | Core differentiator weak | Provider/model selection per language, eval datasets per language, human-review loop |
-| **Compliance (consent/recording/DPDP)** under-specified in PRD | Legal exposure | Treat as MVP blocker for outbound; see PRD review |
-| **Single Postgres as everything** (OLTP + vector + FTS) | Contention at scale | Read replica, monitor, documented extraction ramps |
+| Risk                                                                    | Impact                               | Mitigation                                                                                         |
+| ----------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| **Voice latency/quality** doesn't hit "is it human?" bar                | Core value prop fails                | Dedicated voice-gateway, streaming pipeline, strict latency SLOs, fallback to human handoff        |
+| **Modular monolith boundaries erode** into a big ball of mud            | Future service extraction impossible | Lint-enforced import boundaries, no cross-context table access, ADR discipline (Phase 4)           |
+| **Multi-tenant data leak**                                              | Catastrophic / legal                 | Defense-in-depth (guard+middleware+RLS) + CI cross-tenant tests                                    |
+| **Third-party cost & rate limits** (OpenAI/Twilio/ElevenLabs/WhatsApp)  | Cost blowup, throttling              | Per-tenant rate limiting, caching, cost telemetry (CPL/ROAS), provider abstraction to swap vendors |
+| **LLM nondeterminism / hallucination** giving wrong property/price info | Trust + legal                        | RAG grounding + citations, guardrails, confidence-based escalation, eval harness on KB answers     |
+| **Regional language + code-switching** quality                          | Core differentiator weak             | Provider/model selection per language, eval datasets per language, human-review loop               |
+| **Compliance (consent/recording/DPDP)** under-specified in PRD          | Legal exposure                       | Treat as MVP blocker for outbound; see PRD review                                                  |
+| **Single Postgres as everything** (OLTP + vector + FTS)                 | Contention at scale                  | Read replica, monitor, documented extraction ramps                                                 |
 
 Full living risk register: extend [`DECISION_LOG.md`](DECISION_LOG.md) as decisions are made.
 
@@ -411,7 +412,7 @@ The architecture is designed so the following are **additive, not rewrites**:
   Conversation Engine and AI Employee are unchanged.
 - **New verticals beyond real estate** — the templates engine + configurable
   qualification/pipeline/scoring means a "Healthcare" or "Auto" template is config + a new
-  template pack, not a fork. Keep real-estate specifics in the *template/config layer*, not
+  template pack, not a fork. Keep real-estate specifics in the _template/config layer_, not
   hard-coded in core domain.
 - **Swap AI providers** — STT/LLM/TTS sit behind ports; add a provider adapter and route by
   language/cost/latency policy.

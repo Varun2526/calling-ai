@@ -9,8 +9,8 @@
 
 ## Context
 
-Authorization in Propulse AI is **two-dimensional**: *tenant scope* ("which org's data" —
-handled by [ADR-0001](0001-multi-tenancy-shared-schema-rls.md)) × *role-based permissions*
+Authorization in Propulse AI is **two-dimensional**: _tenant scope_ ("which org's data" —
+handled by [ADR-0001](0001-multi-tenancy-shared-schema-rls.md)) × _role-based permissions_
 ("what may this role do"). This ADR covers the second dimension.
 
 The PRD defines a fixed set of roles spanning two tiers
@@ -18,7 +18,7 @@ The PRD defines a fixed set of roles spanning two tiers
 **platform roles** — Super Admin, Operations Admin — that span organizations, and **tenant
 roles** — Client Owner, Sales Manager, Sales Executive, Pre-Sales Executive, Support — scoped
 to exactly one org. Permissions are not purely role-flat: there are a few resource-level
-refinements (e.g. a Sales Executive can *read* all leads in their org but may only *modify*
+refinements (e.g. a Sales Executive can _read_ all leads in their org but may only _modify_
 leads assigned to them, configurable per org via the assignment rules).
 
 The anti-pattern to avoid is scattering `if (role === 'SalesManager')` checks across
@@ -36,15 +36,15 @@ deferred.**
 - **Ability as data, not scattered conditionals.** Permissions are `(action, subject)` pairs —
   e.g. `update:Lead`, `read:Analytics`, `manage:Organization`. The IAM domain service
   `AuthorizationPolicy` builds a CASL-style ability from the user's role + scope
-  ([`DOMAIN_RULES.md`](../DOMAIN_RULES.md) BC-1). Call sites *check the ability*; they do not
+  ([`DOMAIN_RULES.md`](../DOMAIN_RULES.md) BC-1). Call sites _check the ability_; they do not
   branch on role names.
 - **Platform vs tenant tiers.** Super Admin / Operations Admin are platform roles and are the
   **only** roles permitted to cross tenant boundaries — and only through audited platform-admin
   endpoints (this is the same separate-role path RLS uses in
   [ADR-0001](0001-multi-tenancy-shared-schema-rls.md)). Tenant roles are confined to one org;
-  tenant scope is always applied *first*, RBAC second.
+  tenant scope is always applied _first_, RBAC second.
 - **Resource-level refinements as policy conditions.** The few attribute rules — chiefly
-  "assigned-to-me" — are expressed as *conditions on the ability* (e.g. `update:Lead` where
+  "assigned-to-me" — are expressed as _conditions on the ability_ (e.g. `update:Lead` where
   `assignedTo == currentUserId`), fed by the CRM assignment rules, **not** as a separate ABAC
   engine. RBAC remains the spine.
 - **Where it lives.** Route-level authorization policies live in each context's
@@ -73,16 +73,16 @@ deferred.**
     thresholds) cannot be expressed yet; they would need a follow-up ADR.
 - **Follow-ups / obligations:**
   - Maintain a per-role ability test matrix in `packages/testing`.
-  - Ensure the cross-tenant platform-admin endpoints are the *only* RLS/tenant-scope bypass and
+  - Ensure the cross-tenant platform-admin endpoints are the _only_ RLS/tenant-scope bypass and
     are fully audited (shared obligation with [ADR-0001](0001-multi-tenancy-shared-schema-rls.md)).
 
 ## Alternatives considered
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Scattered `if (role === …)` checks** | Trivial to start | Unauditable, untestable, rots fast; duplicated logic | ❌ rejected — the exact anti-pattern we exist to avoid |
-| **Full ABAC / policy engine (e.g. OPA) from day one** | Maximally expressive | Heavyweight for a fixed PRD role set; new infra + latency; over-engineered for V1 needs | ❌ deferred — adopt only if attribute-rich policies actually arrive |
-| **RBAC via CASL-style ability + a few resource conditions (chosen)** | Declarative, testable, fits the PRD roles, handles "assigned-to-me" | Conditional rules need care; not fully attribute-based | ✅ **chosen** |
+| Option                                                               | Pros                                                                | Cons                                                                                    | Verdict                                                             |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Scattered `if (role === …)` checks**                               | Trivial to start                                                    | Unauditable, untestable, rots fast; duplicated logic                                    | ❌ rejected — the exact anti-pattern we exist to avoid              |
+| **Full ABAC / policy engine (e.g. OPA) from day one**                | Maximally expressive                                                | Heavyweight for a fixed PRD role set; new infra + latency; over-engineered for V1 needs | ❌ deferred — adopt only if attribute-rich policies actually arrive |
+| **RBAC via CASL-style ability + a few resource conditions (chosen)** | Declarative, testable, fits the PRD roles, handles "assigned-to-me" | Conditional rules need care; not fully attribute-based                                  | ✅ **chosen**                                                       |
 
 ## Related
 

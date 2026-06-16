@@ -19,7 +19,7 @@ serving another. A cross-tenant leak is a catastrophic, potentially legal event 
 For V1 the platform is **internally managed** (no public self-signup — orgs and users are
 provisioned by platform admins via signed invitations, per the PRD). Tenant count is modest
 but growing; we run a single Postgres (RDS) that also carries pgvector and full-text search.
-We need an isolation model that is *strong if enforced*, cheap to operate, and does not make
+We need an isolation model that is _strong if enforced_, cheap to operate, and does not make
 cross-tenant platform analytics or schema migrations painful. The choice must be made now
 because it determines the shape of every table, every repository, every cache key, and every
 S3 prefix in the codebase — retrofitting it later is a rewrite.
@@ -32,7 +32,7 @@ guard, a Prisma tenant-scoping middleware, and Postgres Row-Level Security (RLS)
 
 All three layers are required — none is optional:
 
-1. **Application tenant guard.** Derives `organizationId` from the *authenticated session*,
+1. **Application tenant guard.** Derives `organizationId` from the _authenticated session_,
    never from the request body or query params, and binds it to a request-scoped tenant
    context. Requests without a resolvable tenant context (outside explicit platform-admin
    paths) are rejected.
@@ -44,7 +44,7 @@ All three layers are required — none is optional:
 3. **Postgres RLS.** Policies key off a `SET app.current_org` GUC set per connection/
    transaction. This is the final backstop if application code has a bug — the database itself
    refuses to return other tenants' rows. Super-admin / Operations Admin use a **separate
-   database role** that may bypass RLS *only* through audited platform-admin endpoints.
+   database role** that may bypass RLS _only_ through audited platform-admin endpoints.
 
 Tenant scoping extends beyond Postgres to every store: **Redis keys** (`org:{id}:...`),
 **BullMQ job data** (every job carries `organizationId`), **S3 object prefixes**
@@ -60,13 +60,13 @@ This realizes invariant #1 in [`ARCHITECTURE.md`](../ARCHITECTURE.md) §0 and gl
 - **Positive:**
   - Lowest operational cost: one schema, one migration run, one connection pool to reason
     about — no migration fan-out across N databases or schemas.
-  - Cross-tenant *platform* analytics and super-admin views are trivial (one query, scoped by
+  - Cross-tenant _platform_ analytics and super-admin views are trivial (one query, scoped by
     role) rather than requiring cross-database federation.
   - Defense-in-depth means a single-layer bug (e.g. a forgotten `where` clause) does not become
     a breach — RLS still refuses the rows.
   - Future extraction of a context to its own service does not change the tenancy model.
 - **Negative / accepted trade-offs:**
-  - Isolation is *logical*, not physical — a determined RLS/role misconfiguration could expose
+  - Isolation is _logical_, not physical — a determined RLS/role misconfiguration could expose
     data. We accept this in exchange for operability, and compensate with the third layer plus
     CI tests. (DB-per-tenant would give physical isolation we judge premature for an
     internally-managed V1.)
@@ -85,11 +85,11 @@ This realizes invariant #1 in [`ARCHITECTURE.md`](../ARCHITECTURE.md) §0 and gl
 
 ## Alternatives considered
 
-| Option | Isolation | Ops cost | Cross-tenant analytics | Verdict |
-|---|---|---|---|---|
-| **Database per tenant** | Strongest (physical) | High — migrations × N, connection sprawl, provisioning automation | Hard (cross-DB federation) | ❌ premature for an internally-managed V1; physical isolation not yet worth the ops burden |
-| **Schema per tenant** | Strong | Medium-high — same migration fan-out pain | Medium | ❌ same migration cost as DB-per-tenant for only marginal isolation gain over RLS |
-| **Shared schema + `organizationId` + RLS (chosen)** | Strong *if enforced in depth* | Low | Easy | ✅ **chosen** — best isolation-per-ops-dollar given V1 constraints, with a clean exit ramp |
+| Option                                              | Isolation                     | Ops cost                                                          | Cross-tenant analytics     | Verdict                                                                                    |
+| --------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| **Database per tenant**                             | Strongest (physical)          | High — migrations × N, connection sprawl, provisioning automation | Hard (cross-DB federation) | ❌ premature for an internally-managed V1; physical isolation not yet worth the ops burden |
+| **Schema per tenant**                               | Strong                        | Medium-high — same migration fan-out pain                         | Medium                     | ❌ same migration cost as DB-per-tenant for only marginal isolation gain over RLS          |
+| **Shared schema + `organizationId` + RLS (chosen)** | Strong _if enforced in depth_ | Low                                                               | Easy                       | ✅ **chosen** — best isolation-per-ops-dollar given V1 constraints, with a clean exit ramp |
 
 The exit ramp is real: because every row already carries `organizationId` and high-volume
 tables are partition-ready by `organizationId` ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §12),
@@ -102,5 +102,5 @@ rewrite.
   (risks); [`DOMAIN_RULES.md`](../DOMAIN_RULES.md) global invariants;
   [`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md) §5 rule 6;
   [`CLEAN_ARCHITECTURE.md`](../CLEAN_ARCHITECTURE.md) §5.
-- ADRs: [ADR-0003](0003-rbac-casl-policy-layer.md) (authorization sits *on top of* tenant
+- ADRs: [ADR-0003](0003-rbac-casl-policy-layer.md) (authorization sits _on top of_ tenant
   scope); [ADR-0006](0006-event-bus-and-outbox.md) (every job/event carries `organizationId`).

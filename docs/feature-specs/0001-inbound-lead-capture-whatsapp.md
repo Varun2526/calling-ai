@@ -1,13 +1,24 @@
 ---
-feature: "Inbound lead capture & AI qualification via WhatsApp"
-slug: "0001-inbound-lead-capture-whatsapp"
-owner: "bhanu (Conversation Engine DRI)"
-status: "Approved"
-target_release: "MVP / R1"
-related_adrs: ["adr/0006-event-bus-and-outbox.md", "adr/0001-multi-tenancy-shared-schema-rls.md"]
-bounded_contexts: ["channels", "conversation", "ai-employee", "knowledge-base", "crm", "qualification", "appointments", "notifications", "analytics"]
-created: "2026-06-16"
-last_updated: "2026-06-16"
+feature: 'Inbound lead capture & AI qualification via WhatsApp'
+slug: '0001-inbound-lead-capture-whatsapp'
+owner: 'bhanu (Conversation Engine DRI)'
+status: 'Approved'
+target_release: 'MVP / R1'
+related_adrs: ['adr/0006-event-bus-and-outbox.md', 'adr/0001-multi-tenancy-shared-schema-rls.md']
+bounded_contexts:
+  [
+    'channels',
+    'conversation',
+    'ai-employee',
+    'knowledge-base',
+    'crm',
+    'qualification',
+    'appointments',
+    'notifications',
+    'analytics',
+  ]
+created: '2026-06-16'
+last_updated: '2026-06-16'
 ---
 
 # Inbound lead capture & AI qualification via WhatsApp
@@ -104,8 +115,8 @@ Scenario: Tenant isolation
   - Conversation Engine: `IdentityResolution` (created/linked), `Conversation` (created), `Message`
     appended (within `Conversation`).
   - AI Employee: `ReasoningSession` (ephemeral, Redis) — reads `AIEmployee` config.
-  - CRM: `Contact` (created/matched), `Lead` (created, assigned). *Separate transactions, joined
-    by events.*
+  - CRM: `Contact` (created/matched), `Lead` (created, assigned). _Separate transactions, joined
+    by events._
   - Lead Qualification: `LeadScore` (created/updated).
   - Appointments: `Appointment` (requested → booked).
 - **New / changed value objects:** none new required for MVP — reuse `Channel.WhatsApp`,
@@ -129,6 +140,7 @@ Scenario: Tenant isolation
 ## 4. Database changes
 
 - **Prisma model changes (`packages/database`):**
+
   ```prisma
   // Conversation Engine
   model ChannelIdentity {
@@ -169,6 +181,7 @@ Scenario: Tenant isolation
   // CRM Contact/Lead, Qualification LeadScore, Appointments Appointment already exist
   // (DOMAIN_RULES BC-6/7/8); this feature adds no new fields beyond LeadSource.WhatsApp usage.
   ```
+
 - **`organizationId` + tenant middleware:** every model above carries `organizationId` and is
   registered with the Prisma tenant middleware (`REPOSITORY_STRUCTURE.md §5.6`).
 - **Migration:** `2026_06_16_add_whatsapp_conversation_capture` — **additive & reversible**

@@ -9,15 +9,15 @@
 
 ## Metadata
 
-| Field | Value |
-|---|---|
-| **Runbook ID** | NNNN |
-| **Title** | <what this incident is> |
-| **Severity** | Sev-1 / Sev-2 / Sev-3 (default; IC may raise) — see severity guide below |
-| **Owner** | <team — e.g. Platform / Voice / DevOps> (CODEOWNERS for the affected service) |
+| Field                 | Value                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| **Runbook ID**        | NNNN                                                                               |
+| **Title**             | <what this incident is>                                                            |
+| **Severity**          | Sev-1 / Sev-2 / Sev-3 (default; IC may raise) — see severity guide below           |
+| **Owner**             | <team — e.g. Platform / Voice / DevOps> (CODEOWNERS for the affected service)      |
 | **Affected services** | `apps/api` / `apps/voice-gateway` / `apps/workers` / `apps/web` / RDS / Redis / S3 |
-| **Last reviewed** | YYYY-MM-DD |
-| **Related** | links to other runbooks, ADRs, dashboards |
+| **Last reviewed**     | YYYY-MM-DD                                                                         |
+| **Related**           | links to other runbooks, ADRs, dashboards                                          |
 
 **Severity quick guide:** Sev-1 = data loss, full outage of a core service, or **any cross-tenant data
 exposure** (always Sev-1). Sev-2 = major degradation, partial outage, SLO breach. Sev-3 = minor/contained.

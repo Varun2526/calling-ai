@@ -53,6 +53,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Prisma client is generated (not committed); required before typecheck/build since
+      # apps/api imports the generated client via @propulse/database. No DB connection needed.
+      - name: Generate Prisma client
+        run: pnpm --filter @propulse/database generate
+
       - name: Format check
         run: pnpm format:check
 
@@ -67,10 +72,13 @@ jobs:
 
       # ── Architecture boundary enforcement (docs/CLEAN_ARCHITECTURE.md §5) ──
       - name: Boundaries — dependency-cruiser
-        run: pnpm dlx dependency-cruiser apps/api/src --config .dependency-cruiser.cjs
+        run: pnpm boundaries
 
       - name: Boundaries — domain purity grep
         run: bash scripts/check-domain-purity.sh
+
+      - name: Architecture fitness test
+        run: pnpm exec vitest run --config vitest.config.ts
 
       - name: Build
         run: pnpm turbo run build --cache-dir=.turbo

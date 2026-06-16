@@ -22,7 +22,7 @@ while the contracts and module boundaries are still moving. We need a single dep
 atomic cross-cutting changes (e.g. change an event schema and every consumer in one PR), and
 fast, cached, parallel builds/tests so CI stays quick as the repo grows. The choice must align
 with the modular-monolith decision ([ADR-0002](0002-modular-monolith-over-microservices.md)):
-workers and voice-gateway must *reuse* context code, never duplicate it.
+workers and voice-gateway must _reuse_ context code, never duplicate it.
 
 ## Decision
 
@@ -53,7 +53,7 @@ workers and voice-gateway must *reuse* context code, never duplicate it.
   - Turborepo caching + affected-task selection keep CI fast as the repo grows.
   - Workers and voice-gateway consume context packages directly, satisfying the
     "domain logic has exactly one home" rule ([`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md) §5 rule 7).
-  - The repo layout *is* the architecture diagram — boundaries are visible and enforceable in
+  - The repo layout _is_ the architecture diagram — boundaries are visible and enforceable in
     one place.
 - **Negative / accepted trade-offs:**
   - A monorepo needs discipline: without the boundary tooling, everything-imports-everything is
@@ -70,12 +70,12 @@ workers and voice-gateway must *reuse* context code, never duplicate it.
 
 ## Alternatives considered
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Polyrepo (one repo per app/package)** | Hard isolation; independent versioning | Cross-repo coordination tax on every shared change; risk of code duplication across api/workers/voice | ❌ rejected — friction with no V1 benefit while boundaries are still settling |
-| **Monorepo with npm/yarn workspaces** | Single graph, familiar | Slower/looser installs; weaker workspace-protocol and content-addressing than pnpm | ❌ rejected — pnpm is strictly better for our needs |
-| **Nx** | Powerful generators/graph | Heavier conceptual surface than we need over NestJS/Next.js conventions | ❌ rejected — Turborepo's lighter task/cache model suffices |
-| **Turborepo + pnpm workspaces (chosen)** | Fast cached parallel builds; strict installs; atomic changes; clean apps/packages split | Requires boundary discipline; shared toolchain | ✅ **chosen** |
+| Option                                   | Pros                                                                                    | Cons                                                                                                  | Verdict                                                                       |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Polyrepo (one repo per app/package)**  | Hard isolation; independent versioning                                                  | Cross-repo coordination tax on every shared change; risk of code duplication across api/workers/voice | ❌ rejected — friction with no V1 benefit while boundaries are still settling |
+| **Monorepo with npm/yarn workspaces**    | Single graph, familiar                                                                  | Slower/looser installs; weaker workspace-protocol and content-addressing than pnpm                    | ❌ rejected — pnpm is strictly better for our needs                           |
+| **Nx**                                   | Powerful generators/graph                                                               | Heavier conceptual surface than we need over NestJS/Next.js conventions                               | ❌ rejected — Turborepo's lighter task/cache model suffices                   |
+| **Turborepo + pnpm workspaces (chosen)** | Fast cached parallel builds; strict installs; atomic changes; clean apps/packages split | Requires boundary discipline; shared toolchain                                                        | ✅ **chosen**                                                                 |
 
 ## Related
 

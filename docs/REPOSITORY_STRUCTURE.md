@@ -167,25 +167,25 @@ Dependency direction (enforced): `presentation → application → domain` and
 
 ## 4. Per-directory charter (purpose / ownership / belongs / forbidden)
 
-| Directory | Purpose | Owner | Belongs here | NEVER here |
-|---|---|---|---|---|
-| `apps/web/app/` | Routing & pages (Next App Router) | Frontend | Route groups, layouts, server components, loaders | Business rules, direct DB access, domain logic |
-| `apps/web/features/<f>/` | Vertical UI slice per feature | Feature owner | Components, hooks, feature api-client, zod schemas | Cross-feature imports of another feature's internals |
-| `apps/web/components/` | Shared app UI | Frontend | Composed, app-aware shared components | Feature-specific logic; primitives (those live in `@propulse/ui`) |
-| `apps/api/src/contexts/<c>/domain/` | Pure domain | Context owner | Entities, VOs, domain services, events, port interfaces | NestJS decorators, Prisma, HTTP, env, `any` I/O |
-| `apps/api/src/contexts/<c>/application/` | Use cases | Context owner | Command/query handlers, event handlers, orchestration | SQL, framework controllers, third-party SDK calls |
-| `apps/api/src/contexts/<c>/infrastructure/` | Adapters | Context owner | Prisma repos, external SDK adapters, mappers | Domain rules / business decisions |
-| `apps/api/src/contexts/<c>/presentation/` | API surface | Context owner | Controllers, WS gateways, auth policies, request DTOs | Business logic, persistence, cross-context imports |
-| `apps/api/src/shared/` | Cross-cutting infra | Platform | Tenant context, guards, interceptors, event bus, outbox | Context-specific domain logic |
-| `apps/voice-gateway/` | Realtime voice runtime | Voice team | Media/session handling reusing context app services | Duplicated domain logic; CRM/KB tables direct |
-| `apps/workers/` | Async processors | Platform + context owners | BullMQ processors invoking application use cases | New business logic not present in `contexts/` |
-| `packages/contracts/` | Shared API/event types | Platform | zod schemas, DTO/event/enum types, ids | Any runtime logic, any I/O, framework code |
-| `packages/domain-kernel/` | Shared kernel | Architects | Cross-context VOs & base classes | Context-specific entities |
-| `packages/database/` | Persistence platform | Platform/DBA | Prisma schema, migrations, RLS, tenant middleware, seeds | Business/domain logic |
-| `packages/ui/` | Design system | Frontend | shadcn/ui primitives, tokens | App/feature-specific components, data fetching |
-| `packages/observability/` | Logging/tracing | Platform | logger, Sentry, metrics helpers | Business logic |
-| `infra/` | IaC & deploy | DevOps | Terraform/CDK, Dockerfiles, ECS defs, scripts | App secrets in plaintext, application code |
-| `docs/` | Knowledge system | All (per CODEOWNERS) | Architecture/standards/specs/ADRs/runbooks | Generated code, secrets, transient notes |
+| Directory                                   | Purpose                           | Owner                     | Belongs here                                             | NEVER here                                                        |
+| ------------------------------------------- | --------------------------------- | ------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| `apps/web/app/`                             | Routing & pages (Next App Router) | Frontend                  | Route groups, layouts, server components, loaders        | Business rules, direct DB access, domain logic                    |
+| `apps/web/features/<f>/`                    | Vertical UI slice per feature     | Feature owner             | Components, hooks, feature api-client, zod schemas       | Cross-feature imports of another feature's internals              |
+| `apps/web/components/`                      | Shared app UI                     | Frontend                  | Composed, app-aware shared components                    | Feature-specific logic; primitives (those live in `@propulse/ui`) |
+| `apps/api/src/contexts/<c>/domain/`         | Pure domain                       | Context owner             | Entities, VOs, domain services, events, port interfaces  | NestJS decorators, Prisma, HTTP, env, `any` I/O                   |
+| `apps/api/src/contexts/<c>/application/`    | Use cases                         | Context owner             | Command/query handlers, event handlers, orchestration    | SQL, framework controllers, third-party SDK calls                 |
+| `apps/api/src/contexts/<c>/infrastructure/` | Adapters                          | Context owner             | Prisma repos, external SDK adapters, mappers             | Domain rules / business decisions                                 |
+| `apps/api/src/contexts/<c>/presentation/`   | API surface                       | Context owner             | Controllers, WS gateways, auth policies, request DTOs    | Business logic, persistence, cross-context imports                |
+| `apps/api/src/shared/`                      | Cross-cutting infra               | Platform                  | Tenant context, guards, interceptors, event bus, outbox  | Context-specific domain logic                                     |
+| `apps/voice-gateway/`                       | Realtime voice runtime            | Voice team                | Media/session handling reusing context app services      | Duplicated domain logic; CRM/KB tables direct                     |
+| `apps/workers/`                             | Async processors                  | Platform + context owners | BullMQ processors invoking application use cases         | New business logic not present in `contexts/`                     |
+| `packages/contracts/`                       | Shared API/event types            | Platform                  | zod schemas, DTO/event/enum types, ids                   | Any runtime logic, any I/O, framework code                        |
+| `packages/domain-kernel/`                   | Shared kernel                     | Architects                | Cross-context VOs & base classes                         | Context-specific entities                                         |
+| `packages/database/`                        | Persistence platform              | Platform/DBA              | Prisma schema, migrations, RLS, tenant middleware, seeds | Business/domain logic                                             |
+| `packages/ui/`                              | Design system                     | Frontend                  | shadcn/ui primitives, tokens                             | App/feature-specific components, data fetching                    |
+| `packages/observability/`                   | Logging/tracing                   | Platform                  | logger, Sentry, metrics helpers                          | Business logic                                                    |
+| `infra/`                                    | IaC & deploy                      | DevOps                    | Terraform/CDK, Dockerfiles, ECS defs, scripts            | App secrets in plaintext, application code                        |
+| `docs/`                                     | Knowledge system                  | All (per CODEOWNERS)      | Architecture/standards/specs/ADRs/runbooks               | Generated code, secrets, transient notes                          |
 
 ---
 

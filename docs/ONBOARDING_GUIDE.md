@@ -12,13 +12,13 @@
 
 Do this before touching code. ~20 minutes of reading saves days of rework.
 
-| # | Doc | Why / what you'll learn |
-|---|---|---|
-| 1 | [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) | What we're building and why — AI employees, the two value loops, the module map, the glossary. |
-| 2 | [ARCHITECTURE.md](ARCHITECTURE.md) | The three non-negotiable invariants (tenant isolation, pure domain core, side-effects-as-events), modular monolith, multi-tenancy. |
-| 3 | [DOMAIN_RULES.md](DOMAIN_RULES.md) | Ubiquitous language + invariants. Internalize **Contact ≠ Lead**, scoring, assignment, escalation. |
-| 4 | [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) | Where everything lives; the per-directory charter; the hard rules that protect boundaries. |
-| 5 | [CLEAN_ARCHITECTURE.md](CLEAN_ARCHITECTURE.md) | The layering inside a context (`presentation → application → domain`, `infrastructure → domain`) and the lint rules that enforce it. |
+| #   | Doc                                                | Why / what you'll learn                                                                                                              |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md)         | What we're building and why — AI employees, the two value loops, the module map, the glossary.                                       |
+| 2   | [ARCHITECTURE.md](ARCHITECTURE.md)                 | The three non-negotiable invariants (tenant isolation, pure domain core, side-effects-as-events), modular monolith, multi-tenancy.   |
+| 3   | [DOMAIN_RULES.md](DOMAIN_RULES.md)                 | Ubiquitous language + invariants. Internalize **Contact ≠ Lead**, scoring, assignment, escalation.                                   |
+| 4   | [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) | Where everything lives; the per-directory charter; the hard rules that protect boundaries.                                           |
+| 5   | [CLEAN_ARCHITECTURE.md](CLEAN_ARCHITECTURE.md)     | The layering inside a context (`presentation → application → domain`, `infrastructure → domain`) and the lint rules that enforce it. |
 
 > AI agents: also read [AI_AGENT_GUIDELINES.md](AI_AGENT_GUIDELINES.md) before generating code.
 
@@ -26,12 +26,12 @@ Do this before touching code. ~20 minutes of reading saves days of rework.
 
 ### 2.1 Prerequisites
 
-| Tool | Version / source | Notes |
-|---|---|---|
-| **Node.js** | Pinned in **`.nvmrc`** / `.node-version` (repo root) | `nvm use` to match exactly. Do not float. |
-| **pnpm** | Workspace package manager (not npm/yarn) | `corepack enable && corepack prepare pnpm@latest --activate` |
-| **Docker + Docker Compose** | For local infra (Postgres+pgvector, Redis, Mailhog, LocalStack/S3) | Docker Desktop or equivalent. |
-| **Turborepo** | Used via `pnpm` scripts | No global install needed; runs through workspace. |
+| Tool                        | Version / source                                                   | Notes                                                        |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Node.js**                 | Pinned in **`.nvmrc`** / `.node-version` (repo root)               | `nvm use` to match exactly. Do not float.                    |
+| **pnpm**                    | Workspace package manager (not npm/yarn)                           | `corepack enable && corepack prepare pnpm@latest --activate` |
+| **Docker + Docker Compose** | For local infra (Postgres+pgvector, Redis, Mailhog, LocalStack/S3) | Docker Desktop or equivalent.                                |
+| **Turborepo**               | Used via `pnpm` scripts                                            | No global install needed; runs through workspace.            |
 
 ```bash
 # from the repo root
@@ -48,12 +48,12 @@ pnpm install            # installs the whole workspace (single dependency graph)
 docker-compose up -d    # postgres+pgvector, redis, mailhog, localstack (S3)
 ```
 
-| Service | Local role | Stand-in for (prod) |
-|---|---|---|
-| **postgres + pgvector** | OLTP + FTS + vector store | AWS RDS PostgreSQL |
-| **redis** | cache · pub/sub · BullMQ | Redis / ElastiCache |
-| **mailhog** | catches outbound email | AWS SES |
-| **localstack** | local S3 | AWS S3 (recordings, docs) |
+| Service                 | Local role                | Stand-in for (prod)       |
+| ----------------------- | ------------------------- | ------------------------- |
+| **postgres + pgvector** | OLTP + FTS + vector store | AWS RDS PostgreSQL        |
+| **redis**               | cache · pub/sub · BullMQ  | Redis / ElastiCache       |
+| **mailhog**             | catches outbound email    | AWS SES                   |
+| **localstack**          | local S3                  | AWS S3 (recordings, docs) |
 
 ### 2.3 Environment
 
@@ -91,12 +91,12 @@ pnpm --filter @propulse/api dev
 
 **Ports per app** (intended defaults; confirm in `.env.example`):
 
-| App | Purpose | Default port |
-|---|---|---|
-| `apps/web` | Next.js dashboards (client + admin) | **3000** |
-| `apps/api` | NestJS REST + WebSocket gateway | **3001** |
-| `apps/voice-gateway` | Realtime voice/media sessions | **3002** |
-| `apps/workers` | BullMQ processors (no HTTP; queue-bound) | n/a |
+| App                  | Purpose                                  | Default port |
+| -------------------- | ---------------------------------------- | ------------ |
+| `apps/web`           | Next.js dashboards (client + admin)      | **3000**     |
+| `apps/api`           | NestJS REST + WebSocket gateway          | **3001**     |
+| `apps/voice-gateway` | Realtime voice/media sessions            | **3002**     |
+| `apps/workers`       | BullMQ processors (no HTTP; queue-bound) | n/a          |
 
 ### 2.6 Verify your setup
 
@@ -176,32 +176,32 @@ Use the **[FEATURE_BLUEPRINT.md](FEATURE_BLUEPRINT.md)** — it's the canonical 
 
 ## 6. Where to get help — key docs index
 
-| Topic | Doc |
-|---|---|
-| Product & vision | [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) · [prd/CALLING_AI_V1.md](prd/CALLING_AI_V1.md) |
-| Architecture & multi-tenancy | [ARCHITECTURE.md](ARCHITECTURE.md) · [adr/](adr/) |
-| Domain language & rules | [DOMAIN_RULES.md](DOMAIN_RULES.md) |
-| Code layout & boundaries | [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) · [CLEAN_ARCHITECTURE.md](CLEAN_ARCHITECTURE.md) |
-| Adding a feature | [FEATURE_BLUEPRINT.md](FEATURE_BLUEPRINT.md) · [feature-specs/](feature-specs/) |
-| API & events | [API_CONTRACTS.md](API_CONTRACTS.md) · [EVENT_CATALOG.md](EVENT_CATALOG.md) |
-| Standards & AI agents | [ENGINEERING_STANDARDS.md](ENGINEERING_STANDARDS.md) · [AI_AGENT_GUIDELINES.md](AI_AGENT_GUIDELINES.md) |
-| Deploy / ops / debugging | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) · [runbooks/](runbooks/) · [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
-| Security & performance | [SECURITY_GUIDELINES.md](SECURITY_GUIDELINES.md) · [PERFORMANCE_GUIDELINES.md](PERFORMANCE_GUIDELINES.md) |
-| What's shipping | [ROADMAP.md](ROADMAP.md) · [DECISION_LOG.md](DECISION_LOG.md) |
-| People | Root `CODEOWNERS` (who owns what) |
+| Topic                        | Doc                                                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Product & vision             | [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) · [prd/CALLING_AI_V1.md](prd/CALLING_AI_V1.md)                      |
+| Architecture & multi-tenancy | [ARCHITECTURE.md](ARCHITECTURE.md) · [adr/](adr/)                                                              |
+| Domain language & rules      | [DOMAIN_RULES.md](DOMAIN_RULES.md)                                                                             |
+| Code layout & boundaries     | [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) · [CLEAN_ARCHITECTURE.md](CLEAN_ARCHITECTURE.md)            |
+| Adding a feature             | [FEATURE_BLUEPRINT.md](FEATURE_BLUEPRINT.md) · [feature-specs/](feature-specs/)                                |
+| API & events                 | [API_CONTRACTS.md](API_CONTRACTS.md) · [EVENT_CATALOG.md](EVENT_CATALOG.md)                                    |
+| Standards & AI agents        | [ENGINEERING_STANDARDS.md](ENGINEERING_STANDARDS.md) · [AI_AGENT_GUIDELINES.md](AI_AGENT_GUIDELINES.md)        |
+| Deploy / ops / debugging     | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) · [runbooks/](runbooks/) · [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Security & performance       | [SECURITY_GUIDELINES.md](SECURITY_GUIDELINES.md) · [PERFORMANCE_GUIDELINES.md](PERFORMANCE_GUIDELINES.md)      |
+| What's shipping              | [ROADMAP.md](ROADMAP.md) · [DECISION_LOG.md](DECISION_LOG.md)                                                  |
+| People                       | Root `CODEOWNERS` (who owns what)                                                                              |
 
 ## 7. The 30-minute checklist
 
-| ⏱ | Step | Done when |
-|---|---|---|
-| 0–5 | Skim the [5 docs](#1-read-these-5-docs-in-this-order) (deep-read later) | You can explain "AI employees, not chatbots" and Contact ≠ Lead |
-| 5–8 | `nvm use` → `corepack enable` → `pnpm install` | Install completes clean |
-| 8–11 | `docker-compose up -d` | Postgres, Redis, Mailhog, LocalStack all healthy |
-| 11–13 | `cp .env.example .env` and fill locals | App boots without missing-env errors |
-| 13–16 | `pnpm db:migrate && pnpm db:seed` | Schema + RLS applied; sample org seeded |
-| 16–20 | `pnpm dev` | web :3000, api :3001, voice-gateway :3002, workers running |
-| 20–23 | Open dashboard :3000; check api health :3001; open Mailhog | Pages render; health green |
-| 23–26 | `pnpm lint && pnpm typecheck && pnpm test` | All green (incl. boundary check) |
-| 26–30 | Find your context's owner in `CODEOWNERS`; open [FEATURE_BLUEPRINT.md](FEATURE_BLUEPRINT.md) | You know where your first change goes and who reviews it |
+| ⏱     | Step                                                                                         | Done when                                                       |
+| ----- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 0–5   | Skim the [5 docs](#1-read-these-5-docs-in-this-order) (deep-read later)                      | You can explain "AI employees, not chatbots" and Contact ≠ Lead |
+| 5–8   | `nvm use` → `corepack enable` → `pnpm install`                                               | Install completes clean                                         |
+| 8–11  | `docker-compose up -d`                                                                       | Postgres, Redis, Mailhog, LocalStack all healthy                |
+| 11–13 | `cp .env.example .env` and fill locals                                                       | App boots without missing-env errors                            |
+| 13–16 | `pnpm db:migrate && pnpm db:seed`                                                            | Schema + RLS applied; sample org seeded                         |
+| 16–20 | `pnpm dev`                                                                                   | web :3000, api :3001, voice-gateway :3002, workers running      |
+| 20–23 | Open dashboard :3000; check api health :3001; open Mailhog                                   | Pages render; health green                                      |
+| 23–26 | `pnpm lint && pnpm typecheck && pnpm test`                                                   | All green (incl. boundary check)                                |
+| 26–30 | Find your context's owner in `CODEOWNERS`; open [FEATURE_BLUEPRINT.md](FEATURE_BLUEPRINT.md) | You know where your first change goes and who reviews it        |
 
 Welcome aboard — build AI employees, not chatbots.

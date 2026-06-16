@@ -13,7 +13,10 @@ export interface ApiRequestOptions extends RequestInit {
   path: string;
 }
 
-export async function apiFetch<TResponse>({ path, ...init }: ApiRequestOptions): Promise<TResponse> {
+export async function apiFetch<TResponse>({
+  path,
+  ...init
+}: ApiRequestOptions): Promise<TResponse> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {

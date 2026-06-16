@@ -15,7 +15,7 @@ the make-or-break "was that a person or AI?" experience. Its end-to-end turn lat
 achieved only by streaming STT partials, starting the LLM on partials, and streaming TTS, never
 waiting for full transcription ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §13).
 
-This runtime profile is *fundamentally different* from the rest of the API. Voice sessions are
+This runtime profile is _fundamentally different_ from the rest of the API. Voice sessions are
 **long-lived, stateful, latency-critical WebSocket/media streams** (`VoiceSession`,
 `MediaStreamRef`, the realtime STT↔LLM↔TTS loop — [`DOMAIN_RULES.md`](../DOMAIN_RULES.md) BC-3).
 `apps/api` by contrast serves short, stateless REST/WS request-response traffic and is
@@ -28,7 +28,7 @@ trigger #3 ("fault isolation") of the extraction rule in
 ## Decision
 
 **We will run the realtime voice loop in a separate deployable service, `apps/voice-gateway`,
-from day one — while keeping the Voice *domain* (call lifecycle) as a context module and
+from day one — while keeping the Voice _domain_ (call lifecycle) as a context module and
 reusing the shared application code, so this is a deployment split, not a logic fork.**
 
 - **`apps/voice-gateway`** owns the long-lived realtime sessions: media stream handling and the
@@ -38,7 +38,7 @@ reusing the shared application code, so this is a deployment split, not a logic 
   exactly as `apps/api` does ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §7;
   [`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md) §2, §4 — "Duplicated domain logic;
   CRM/KB tables direct" is forbidden in `apps/voice-gateway`). The Voice domain lives in
-  `contexts/voice/`; the *live loop* runs in voice-gateway.
+  `contexts/voice/`; the _live loop_ runs in voice-gateway.
 - Post-call work (transcription finalization, summary, sentiment, CRM auto-update) is **not**
   done inline in the voice loop — voice-gateway enqueues BullMQ jobs drained by `apps/workers`
   ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §7, §9), keeping the realtime path lean.
@@ -72,11 +72,11 @@ reusing the shared application code, so this is a deployment split, not a logic 
 
 ## Alternatives considered
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Voice inside `apps/api`** | One fewer service; simplest ops | API deploys kill live calls; can't scale voice independently; latency budget at risk; blast radius shared | ❌ rejected — violates extraction triggers #1 and #3 |
-| **Voice as a job in `apps/workers`** | Reuses queue infra | Queues are for async, retryable, non-latency-critical work; a realtime streaming loop is none of those ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §9) | ❌ rejected — wrong execution model for sub-second streaming |
-| **Separate `voice-gateway` service reusing context app code (chosen)** | Isolated deploy/scale/fault profile; no duplicated logic | Extra deployable; stickiness/checkpoint complexity | ✅ **chosen** |
+| Option                                                                 | Pros                                                     | Cons                                                                                                                                                | Verdict                                                      |
+| ---------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Voice inside `apps/api`**                                            | One fewer service; simplest ops                          | API deploys kill live calls; can't scale voice independently; latency budget at risk; blast radius shared                                           | ❌ rejected — violates extraction triggers #1 and #3         |
+| **Voice as a job in `apps/workers`**                                   | Reuses queue infra                                       | Queues are for async, retryable, non-latency-critical work; a realtime streaming loop is none of those ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §9) | ❌ rejected — wrong execution model for sub-second streaming |
+| **Separate `voice-gateway` service reusing context app code (chosen)** | Isolated deploy/scale/fault profile; no duplicated logic | Extra deployable; stickiness/checkpoint complexity                                                                                                  | ✅ **chosen**                                                |
 
 ## Related
 

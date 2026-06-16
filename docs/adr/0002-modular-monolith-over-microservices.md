@@ -21,8 +21,8 @@ distributed transactions, per-service CI/CD and observability, and the cognitive
 versioning N service APIs — all before we even know which seams will actually need
 independent scaling. At the same time, a naive monolith risks decaying into a big ball of mud,
 which would make future extraction impossible (a top risk in
-[`ARCHITECTURE.md`](../ARCHITECTURE.md) §15). We need the *boundaries* of microservices without
-the *operational cost*, and a concrete rule for when to pay that cost.
+[`ARCHITECTURE.md`](../ARCHITECTURE.md) §15). We need the _boundaries_ of microservices without
+the _operational cost_, and a concrete rule for when to pay that cost.
 
 ## Decision
 
@@ -30,12 +30,12 @@ the *operational cost*, and a concrete rule for when to pay that cost.
 module per bounded context, separated by hard, lint-enforced boundaries — and extract a context
 into its own deployable service only when a specific trigger fires.**
 
-The boundaries are designed in from day one so that extraction is *mechanical, not a rewrite*:
+The boundaries are designed in from day one so that extraction is _mechanical, not a rewrite_:
 
 - **One context = one NestJS module = one schema namespace**, owning its tables exclusively
   ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §5, [`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md) §3).
 - **No cross-context imports of internals** and **no cross-context table access.** A context
-  may import only another context's *published application interface* or its event/contract
+  may import only another context's _published application interface_ or its event/contract
   types — never its `domain/` or `infrastructure/`. This is enforced mechanically (ESLint
   boundaries, dependency-cruiser, CI greps), not by reviewer goodwill
   ([`CLEAN_ARCHITECTURE.md`](../CLEAN_ARCHITECTURE.md) §5, [`REPOSITORY_STRUCTURE.md`](../REPOSITORY_STRUCTURE.md) §5).
@@ -46,8 +46,8 @@ The boundaries are designed in from day one so that extraction is *mechanical, n
   the in-process bus for SNS/SQS or Kafka touches subscribers' transport, not their logic.
 - **IDs cross boundaries, not entities** ([`ARCHITECTURE.md`](../ARCHITECTURE.md) §5).
 
-**The rule for when we extract a context to its own service** — extract only when *at least
-one* of these is true, and record it in an ADR:
+**The rule for when we extract a context to its own service** — extract only when _at least
+one_ of these is true, and record it in an ADR:
 
 1. **Divergent runtime profile.** A context needs a fundamentally different scaling/availability
    profile from the rest of the API. (Voice already meets this bar — it is split out from day
@@ -73,7 +73,7 @@ Absent a trigger, we do **not** extract. "It feels cleaner as a service" is not 
 - **Negative / accepted trade-offs:**
   - The whole API scales as a unit until a context is extracted; one context can hog resources
     (mitigated by per-tenant/per-queue rate limiting, [`ARCHITECTURE.md`](../ARCHITECTURE.md) §12).
-  - Boundary discipline is now a *standing cost*: the lint/dep-cruiser/CI rules must stay green,
+  - Boundary discipline is now a _standing cost_: the lint/dep-cruiser/CI rules must stay green,
     and any relaxation requires an ADR + a config change in the same PR.
   - A single process means a catastrophic bug can take down all synchronous contexts at once
     (mitigated by the queue/voice split absorbing the async- and latency-critical paths).
@@ -84,11 +84,11 @@ Absent a trigger, we do **not** extract. "It feels cleaner as a service" is not 
 
 ## Alternatives considered
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Microservices from day one** | Independent scale/deploy/fault isolation per context | Network hops blow latency budgets; distributed transactions; N pipelines + observability; premature before we know the real seams | ❌ rejected — distributed-systems tax with no V1 payoff |
-| **Plain (unstructured) monolith** | Fastest to write initially | Boundaries erode into a big ball of mud; future extraction becomes a rewrite (a top §15 risk) | ❌ rejected — trades short-term speed for long-term lock-in |
-| **Modular monolith with enforced boundaries + extract-on-trigger (chosen)** | Real, lint-enforced seams; monolith velocity; mechanical extraction later | Standing boundary-discipline cost; scales as a unit until extraction | ✅ **chosen** |
+| Option                                                                      | Pros                                                                      | Cons                                                                                                                              | Verdict                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Microservices from day one**                                              | Independent scale/deploy/fault isolation per context                      | Network hops blow latency budgets; distributed transactions; N pipelines + observability; premature before we know the real seams | ❌ rejected — distributed-systems tax with no V1 payoff     |
+| **Plain (unstructured) monolith**                                           | Fastest to write initially                                                | Boundaries erode into a big ball of mud; future extraction becomes a rewrite (a top §15 risk)                                     | ❌ rejected — trades short-term speed for long-term lock-in |
+| **Modular monolith with enforced boundaries + extract-on-trigger (chosen)** | Real, lint-enforced seams; monolith velocity; mechanical extraction later | Standing boundary-discipline cost; scales as a unit until extraction                                                              | ✅ **chosen**                                               |
 
 ## Related
 

@@ -13,7 +13,7 @@
 >
 > **Update frequency:** **with every new or changed event** — a new event, a new event version
 > (`vN+1`), or a payload field change must update this file and the zod schema in the same PR,
-> reviewed by the emitting context's owner. Adding a *consumer* also updates the "Consumed by"
+> reviewed by the emitting context's owner. Adding a _consumer_ also updates the "Consumed by"
 > column.
 
 Builds on [`ARCHITECTURE.md`](ARCHITECTURE.md) §8 (Transactional Outbox → relay → BullMQ → typed
@@ -29,21 +29,23 @@ validated by its zod schema in `packages/contracts`; the envelope is identical a
 
 ```jsonc
 {
-  "eventId":        "01J8X...ULID",      // unique per emission; the idempotency key for handlers
-  "eventName":      "crm.lead.created.v1",// <context>.<aggregate>.<pastTenseFact>.v<major>
-  "version":        1,                     // integer major, mirrors the .vN suffix
-  "occurredAt":     "2026-06-16T10:00:00.000Z", // UTC Instant; when the fact happened
-  "organizationId": "org_01J8...",        // tenant scope — ALWAYS present, never null (ARCH §10)
-  "aggregateId":    "lead_01J8...",        // id of the aggregate that changed
-  "causationId":    "01J8X...",            // the eventId/commandId that directly caused this
-  "correlationId":  "01J8X...",            // shared across a whole workflow (= API traceId)
-  "payload":        { /* event-specific, zod-validated */ },
+  "eventId": "01J8X...ULID", // unique per emission; the idempotency key for handlers
+  "eventName": "crm.lead.created.v1", // <context>.<aggregate>.<pastTenseFact>.v<major>
+  "version": 1, // integer major, mirrors the .vN suffix
+  "occurredAt": "2026-06-16T10:00:00.000Z", // UTC Instant; when the fact happened
+  "organizationId": "org_01J8...", // tenant scope — ALWAYS present, never null (ARCH §10)
+  "aggregateId": "lead_01J8...", // id of the aggregate that changed
+  "causationId": "01J8X...", // the eventId/commandId that directly caused this
+  "correlationId": "01J8X...", // shared across a whole workflow (= API traceId)
+  "payload": {
+    /* event-specific, zod-validated */
+  },
   "metadata": {
-    "actor":        { "type": "ai|user|system", "id": "..." },
-    "schemaVersion":"1.0.0",               // semver of the payload schema within this major
-    "source":       "apps/api|workers|voice-gateway",
-    "occurredVia":  "rest|webhook|ws|job|saga"
-  }
+    "actor": { "type": "ai|user|system", "id": "..." },
+    "schemaVersion": "1.0.0", // semver of the payload schema within this major
+    "source": "apps/api|workers|voice-gateway",
+    "occurredVia": "rest|webhook|ws|job|saga",
+  },
 }
 ```
 
@@ -53,7 +55,7 @@ validated by its zod schema in `packages/contracts`; the envelope is identical a
   the handler's tenant context, Redis keys, and queue routing.
 - `correlationId` ties a whole choreography together (e.g. one inbound message through identity
   → reasoning → CRM → notification) and equals the originating HTTP `traceId`/`X-Request-Id`.
-- `causationId` is the *direct* parent (the event/command that triggered this one), enabling a
+- `causationId` is the _direct_ parent (the event/command that triggered this one), enabling a
   causal trace even within a long correlation chain.
 - `metadata.schemaVersion` is the **semver within the major** — additive changes bump
   minor/patch; the `.vN` major only changes on a breaking change (below).
@@ -61,7 +63,7 @@ validated by its zod schema in `packages/contracts`; the envelope is identical a
 ### Immutability
 
 Events are **immutable past-tense facts**. Once written to the `outbox` they are never edited or
-deleted. Corrections are modeled as *new* events (e.g. `crm.lead.updated.v1`,
+deleted. Corrections are modeled as _new_ events (e.g. `crm.lead.updated.v1`,
 `crm.contact.merged.v1`), never by mutating a prior event. The Conversation timeline and the
 audit log follow the same append-only rule (DOMAIN_RULES BC-2, BC-14).
 
@@ -113,133 +115,133 @@ effects are always async (workers) unless noted "sync".
 
 ### IAM (BC-1)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `iam.organization.created.v1` | IAM | `organizationId`, `name`, `status` | Organization, Notifications, Analytics | Async; triggers onboarding flow creation. |
-| `iam.user.invited.v1` | IAM | `invitationId`, `email`, `role` | Notifications (send invite email) | Async. |
-| `iam.user.activated.v1` | IAM | `userId`, `organizationId`, `role` | CRM (assignment pool), Notifications, Analytics | Async. |
-| `iam.role.assigned.v1` | IAM | `userId`, `role`, `scope` | CRM (assignment), Platform Ops (audit) | Async. |
-| `iam.session.revoked.v1` | IAM | `sessionId`, `userId` | API/WS gateway (drop sockets), Platform Ops | Async; forces WS disconnect. |
+| Event                         | Emitted by | Payload (key fields)               | Consumed by                                     | Sync/Async notes                          |
+| ----------------------------- | ---------- | ---------------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| `iam.organization.created.v1` | IAM        | `organizationId`, `name`, `status` | Organization, Notifications, Analytics          | Async; triggers onboarding flow creation. |
+| `iam.user.invited.v1`         | IAM        | `invitationId`, `email`, `role`    | Notifications (send invite email)               | Async.                                    |
+| `iam.user.activated.v1`       | IAM        | `userId`, `organizationId`, `role` | CRM (assignment pool), Notifications, Analytics | Async.                                    |
+| `iam.role.assigned.v1`        | IAM        | `userId`, `role`, `scope`          | CRM (assignment), Platform Ops (audit)          | Async.                                    |
+| `iam.session.revoked.v1`      | IAM        | `sessionId`, `userId`              | API/WS gateway (drop sockets), Platform Ops     | Async; forces WS disconnect.              |
 
 ### Organization & Onboarding (BC-9)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `org.profile.updated.v1` | Organization | `organizationId`, changed fields (hours, tz, languages, brand) | AI Employee, Appointments, Notifications (config cache invalidation), Analytics | Async; invalidates org-config cache. |
-| `org.template.applied.v1` | Organization | `templateId`, `sagaId`, `type` | (saga marker) Analytics, Platform Ops | Async; start of provisioning saga. |
-| `org.provision.pipeline.requested.v1` (et al. `…requested.v1`) | Organization | target context + provisioning spec | CRM / AI Employee / Campaign / Appointments / Notifications (per intent) | Async **provisioning intents**; idempotent (re-apply doesn't duplicate). |
-| `org.onboarding.step.completed.v1` | Organization | `stepId`, `completion` | Analytics | Async. |
-| `org.onboarding.completed.v1` | Organization | `organizationId` | Notifications, Analytics | Async; org now operational. |
+| Event                                                          | Emitted by   | Payload (key fields)                                           | Consumed by                                                                     | Sync/Async notes                                                         |
+| -------------------------------------------------------------- | ------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `org.profile.updated.v1`                                       | Organization | `organizationId`, changed fields (hours, tz, languages, brand) | AI Employee, Appointments, Notifications (config cache invalidation), Analytics | Async; invalidates org-config cache.                                     |
+| `org.template.applied.v1`                                      | Organization | `templateId`, `sagaId`, `type`                                 | (saga marker) Analytics, Platform Ops                                           | Async; start of provisioning saga.                                       |
+| `org.provision.pipeline.requested.v1` (et al. `…requested.v1`) | Organization | target context + provisioning spec                             | CRM / AI Employee / Campaign / Appointments / Notifications (per intent)        | Async **provisioning intents**; idempotent (re-apply doesn't duplicate). |
+| `org.onboarding.step.completed.v1`                             | Organization | `stepId`, `completion`                                         | Analytics                                                                       | Async.                                                                   |
+| `org.onboarding.completed.v1`                                  | Organization | `organizationId`                                               | Notifications, Analytics                                                        | Async; org now operational.                                              |
 
 ### Knowledge Base (BC-5)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `kb.source.uploaded.v1` | Knowledge Base | `sourceId`, `type`, `s3Key?` | KB IngestionPipeline (workers), Analytics | Async; kicks off ingestion. |
-| `kb.ingestion.started.v1` | Knowledge Base | `sourceId`, `jobId` | (UI status), Analytics | Async. |
-| `kb.ingestion.completed.v1` | Knowledge Base | `sourceId`, `documentIds`, `chunkCount`, `embeddingModel` | AI Employee (knowledge availability), Notifications, Analytics | Async; source now retrievable. |
-| `kb.ingestion.failed.v1` | Knowledge Base | `sourceId`, `reason` | Notifications (`WorkflowFailure`), Platform Ops | Async; retryable, idempotent. |
-| `kb.source.reindexed.v1` | Knowledge Base | `sourceId`, `embeddingModel` | AI Employee, Analytics | Async; re-embed on model change. |
+| Event                       | Emitted by     | Payload (key fields)                                      | Consumed by                                                    | Sync/Async notes                 |
+| --------------------------- | -------------- | --------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------- |
+| `kb.source.uploaded.v1`     | Knowledge Base | `sourceId`, `type`, `s3Key?`                              | KB IngestionPipeline (workers), Analytics                      | Async; kicks off ingestion.      |
+| `kb.ingestion.started.v1`   | Knowledge Base | `sourceId`, `jobId`                                       | (UI status), Analytics                                         | Async.                           |
+| `kb.ingestion.completed.v1` | Knowledge Base | `sourceId`, `documentIds`, `chunkCount`, `embeddingModel` | AI Employee (knowledge availability), Notifications, Analytics | Async; source now retrievable.   |
+| `kb.ingestion.failed.v1`    | Knowledge Base | `sourceId`, `reason`                                      | Notifications (`WorkflowFailure`), Platform Ops                | Async; retryable, idempotent.    |
+| `kb.source.reindexed.v1`    | Knowledge Base | `sourceId`, `embeddingModel`                              | AI Employee, Analytics                                         | Async; re-embed on model change. |
 
 ### AI Employee (BC-1.AI)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `ai.employee.created.v1` | AI Employee | `aiEmployeeId`, identity, grants | Conversation, Voice, Analytics | Async. |
-| `ai.employee.updated.v1` | AI Employee | `aiEmployeeId`, changed config | Conversation, Voice (config cache), Analytics | Async; invalidates AI-config cache. |
-| `ai.action.intended.v1` | AI Employee | `reasoningSessionId`, `actionType`, params, originating turn | (audit/trace), Analytics | Async; before grant/permission validation. |
-| `ai.action.dispatched.v1` | AI Employee (ActionDispatcher) | `actionType`, params, target context | CRM / Appointments / Campaign / Notifications / Conversation (the owning context) | Async; the validated command-as-event to the owning context. |
-| `ai.escalation.raised.v1` | AI Employee (EscalationEvaluator) | `conversationId`, `reason`, `confidence` | Conversation (HandoffCoordinator), Notifications (`HumanEscalation`), Analytics | Async; low-confidence/rule handoff. |
-| `ai.reasoning.completed.v1` | AI Employee | `reasoningSessionId`, `confidence`, `tokens`, `latency` | Analytics (cost/metrics), Lead Qualification (engagement factor) | Async; cost & quality telemetry. |
+| Event                       | Emitted by                        | Payload (key fields)                                         | Consumed by                                                                       | Sync/Async notes                                             |
+| --------------------------- | --------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `ai.employee.created.v1`    | AI Employee                       | `aiEmployeeId`, identity, grants                             | Conversation, Voice, Analytics                                                    | Async.                                                       |
+| `ai.employee.updated.v1`    | AI Employee                       | `aiEmployeeId`, changed config                               | Conversation, Voice (config cache), Analytics                                     | Async; invalidates AI-config cache.                          |
+| `ai.action.intended.v1`     | AI Employee                       | `reasoningSessionId`, `actionType`, params, originating turn | (audit/trace), Analytics                                                          | Async; before grant/permission validation.                   |
+| `ai.action.dispatched.v1`   | AI Employee (ActionDispatcher)    | `actionType`, params, target context                         | CRM / Appointments / Campaign / Notifications / Conversation (the owning context) | Async; the validated command-as-event to the owning context. |
+| `ai.escalation.raised.v1`   | AI Employee (EscalationEvaluator) | `conversationId`, `reason`, `confidence`                     | Conversation (HandoffCoordinator), Notifications (`HumanEscalation`), Analytics   | Async; low-confidence/rule handoff.                          |
+| `ai.reasoning.completed.v1` | AI Employee                       | `reasoningSessionId`, `confidence`, `tokens`, `latency`      | Analytics (cost/metrics), Lead Qualification (engagement factor)                  | Async; cost & quality telemetry.                             |
 
 ### Conversation Engine (BC-2) & Channels (BC-10)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `channels.message.received.v1` | Channels (webhook adapters) | `channel`, `from`, `content`, `mediaRefs`, provider ids | Conversation Engine (identity resolve + append) | Async; the normalized inbound entry point. |
-| `conversation.created.v1` | Conversation Engine | `conversationId`, `contactId`, `channel` | CRM, AI Employee, Analytics | Async. |
-| `conversation.message.appended.v1` | Conversation Engine | `conversationId`, `message`, direction, author | AI Employee (reason), Lead Qualification, Analytics, WS gateway (push) | Async; **also pushed live over WS** (API_CONTRACTS §4). |
-| `conversation.identity.merged.v1` | Conversation Engine | `canonicalContactId`, `mergedIds` | CRM (`crm.contact.merged`), Analytics | Async; never merges two different people (BC-2). |
-| `conversation.handoff.requested.v1` | Conversation Engine | `conversationId`, `reason` | Notifications (`HumanEscalation`), CRM (assignment), WS gateway | Async. |
-| `conversation.control.transferred.v1` | Conversation Engine | `conversationId`, `from`, `to` (AI/Human/Paused) | AI Employee (stop if paused), Notifications, WS gateway, Analytics | Async; legal transitions only (BC-2). |
+| Event                                 | Emitted by                  | Payload (key fields)                                    | Consumed by                                                            | Sync/Async notes                                        |
+| ------------------------------------- | --------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
+| `channels.message.received.v1`        | Channels (webhook adapters) | `channel`, `from`, `content`, `mediaRefs`, provider ids | Conversation Engine (identity resolve + append)                        | Async; the normalized inbound entry point.              |
+| `conversation.created.v1`             | Conversation Engine         | `conversationId`, `contactId`, `channel`                | CRM, AI Employee, Analytics                                            | Async.                                                  |
+| `conversation.message.appended.v1`    | Conversation Engine         | `conversationId`, `message`, direction, author          | AI Employee (reason), Lead Qualification, Analytics, WS gateway (push) | Async; **also pushed live over WS** (API_CONTRACTS §4). |
+| `conversation.identity.merged.v1`     | Conversation Engine         | `canonicalContactId`, `mergedIds`                       | CRM (`crm.contact.merged`), Analytics                                  | Async; never merges two different people (BC-2).        |
+| `conversation.handoff.requested.v1`   | Conversation Engine         | `conversationId`, `reason`                              | Notifications (`HumanEscalation`), CRM (assignment), WS gateway        | Async.                                                  |
+| `conversation.control.transferred.v1` | Conversation Engine         | `conversationId`, `from`, `to` (AI/Human/Paused)        | AI Employee (stop if paused), Notifications, WS gateway, Analytics     | Async; legal transitions only (BC-2).                   |
 
 ### Voice / Telephony (BC-3) & Calls (BC-8.Calls)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `calls.incoming.received.v1` | Voice (Twilio webhook) | `callSid`, `from`, `to` | Voice-gateway (start session), CRM, Analytics | Async ack; live loop in voice-gateway (ARCH §9). |
-| `calls.started.v1` | Voice | `callId`, `direction`, `aiEmployeeId` | Conversation, CRM, Analytics | Async. |
-| `calls.ended.v1` | Voice | `callId`, `status`, `duration` | Calls (start transcription), CRM, Lead Qualification (CallDuration), Analytics | Async; kicks the post-call pipeline. |
-| `calls.transferred.v1` | Voice | `callId`, `toExecutiveId` | Notifications, CRM, Analytics | Async; transfer must never silently fail (BC-3). |
-| `calls.recording.available.v1` | Voice | `callId`, `s3Key` | Calls (transcription job), Analytics | Async; tenant-prefixed S3 key. |
-| `calls.transcript.completed.v1` | Calls | `callId`, `transcriptId`, `version`, `segments` | Calls (summarization), Conversation, Analytics | Async; versioned (BC-8.Calls). |
-| `calls.summary.completed.v1` | Calls | `callId`, `summary`, `actionItems` | CRM (auto-update, traceable), Notifications, Analytics | Async. |
-| `calls.sentiment.computed.v1` | Calls | `callId`, `sentiment` | Lead Qualification (Sentiment factor), Analytics | Async. |
-| `calls.requirements.extracted.v1` | Calls | `callId`, `leadId`, extracted fields (budget/location/type/config/timeline/loan) | CRM (auto-update, reversible), Lead Qualification | Async; CRM update is traceable + reversible (BC-8.Calls). |
+| Event                             | Emitted by             | Payload (key fields)                                                             | Consumed by                                                                    | Sync/Async notes                                          |
+| --------------------------------- | ---------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `calls.incoming.received.v1`      | Voice (Twilio webhook) | `callSid`, `from`, `to`                                                          | Voice-gateway (start session), CRM, Analytics                                  | Async ack; live loop in voice-gateway (ARCH §9).          |
+| `calls.started.v1`                | Voice                  | `callId`, `direction`, `aiEmployeeId`                                            | Conversation, CRM, Analytics                                                   | Async.                                                    |
+| `calls.ended.v1`                  | Voice                  | `callId`, `status`, `duration`                                                   | Calls (start transcription), CRM, Lead Qualification (CallDuration), Analytics | Async; kicks the post-call pipeline.                      |
+| `calls.transferred.v1`            | Voice                  | `callId`, `toExecutiveId`                                                        | Notifications, CRM, Analytics                                                  | Async; transfer must never silently fail (BC-3).          |
+| `calls.recording.available.v1`    | Voice                  | `callId`, `s3Key`                                                                | Calls (transcription job), Analytics                                           | Async; tenant-prefixed S3 key.                            |
+| `calls.transcript.completed.v1`   | Calls                  | `callId`, `transcriptId`, `version`, `segments`                                  | Calls (summarization), Conversation, Analytics                                 | Async; versioned (BC-8.Calls).                            |
+| `calls.summary.completed.v1`      | Calls                  | `callId`, `summary`, `actionItems`                                               | CRM (auto-update, traceable), Notifications, Analytics                         | Async.                                                    |
+| `calls.sentiment.computed.v1`     | Calls                  | `callId`, `sentiment`                                                            | Lead Qualification (Sentiment factor), Analytics                               | Async.                                                    |
+| `calls.requirements.extracted.v1` | Calls                  | `callId`, `leadId`, extracted fields (budget/location/type/config/timeline/loan) | CRM (auto-update, reversible), Lead Qualification                              | Async; CRM update is traceable + reversible (BC-8.Calls). |
 
 ### CRM (BC-6)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `crm.contact.created.v1` | CRM | `contactId`, identities | Conversation, Campaign, Analytics | Async. |
-| `crm.contact.merged.v1` | CRM | `canonicalContactId`, `mergedIds` | Conversation, Campaign, Analytics | Async; no duplicate contact (BC-6). |
-| `crm.lead.created.v1` | CRM | `leadId`, `contactId`, `source`, `stage` | Lead Qualification, Campaign, Notifications (`NewLead`), Appointments, Analytics | Async. |
-| `crm.lead.updated.v1` | CRM | `leadId`, changed fields | Lead Qualification, Campaign, Analytics | Async. |
-| `crm.lead.stage.changed.v1` | CRM | `leadId`, `fromStage`, `toStage`, `reason?` | Campaign (stop on convert), Notifications, Analytics | Async; `Lost` carries reason (BC-6). |
-| `crm.lead.assigned.v1` | CRM (AssignmentService) | `leadId`, `executiveId`, `strategy` | Notifications (`LeadAssigned`), Analytics | Async; fallback guarantees no unassigned lead (BC-6). |
-| `crm.lead.unassigned.v1` | CRM | `leadId`, `reason` | CRM (re-assign), Notifications, Analytics | Async; never strands in limbo (BC-6). |
-| `crm.activity.logged.v1` | CRM | `leadId`, `activityType`, `body` | Analytics | Async. |
+| Event                       | Emitted by              | Payload (key fields)                        | Consumed by                                                                      | Sync/Async notes                                      |
+| --------------------------- | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `crm.contact.created.v1`    | CRM                     | `contactId`, identities                     | Conversation, Campaign, Analytics                                                | Async.                                                |
+| `crm.contact.merged.v1`     | CRM                     | `canonicalContactId`, `mergedIds`           | Conversation, Campaign, Analytics                                                | Async; no duplicate contact (BC-6).                   |
+| `crm.lead.created.v1`       | CRM                     | `leadId`, `contactId`, `source`, `stage`    | Lead Qualification, Campaign, Notifications (`NewLead`), Appointments, Analytics | Async.                                                |
+| `crm.lead.updated.v1`       | CRM                     | `leadId`, changed fields                    | Lead Qualification, Campaign, Analytics                                          | Async.                                                |
+| `crm.lead.stage.changed.v1` | CRM                     | `leadId`, `fromStage`, `toStage`, `reason?` | Campaign (stop on convert), Notifications, Analytics                             | Async; `Lost` carries reason (BC-6).                  |
+| `crm.lead.assigned.v1`      | CRM (AssignmentService) | `leadId`, `executiveId`, `strategy`         | Notifications (`LeadAssigned`), Analytics                                        | Async; fallback guarantees no unassigned lead (BC-6). |
+| `crm.lead.unassigned.v1`    | CRM                     | `leadId`, `reason`                          | CRM (re-assign), Notifications, Analytics                                        | Async; never strands in limbo (BC-6).                 |
+| `crm.activity.logged.v1`    | CRM                     | `leadId`, `activityType`, `body`            | Analytics                                                                        | Async.                                                |
 
 ### Lead Qualification & Scoring (BC-7)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `qualification.answer.captured.v1` | Lead Qualification | `leadId`, `questionId`, `answer` | Lead Qualification (ScoringEngine), Analytics | Async; captured via AI or human. |
-| `qualification.completed.v1` | Lead Qualification | `leadId`, `setId` | CRM, Campaign, Analytics | Async. |
-| `leadscore.updated.v1` | Lead Qualification | `leadId`, `value`, `category`, `factors[]` | CRM (denormalized score copy), Campaign (segmentation), Analytics | Async; explainable — carries factors (BC-7); CRM copy derived from this. |
-| `leadscore.category.changed.v1` | Lead Qualification | `leadId`, `from`, `to` (Cold/Warm/Hot) | CRM, Campaign, Notifications, Analytics | Async; e.g. Warm→Hot triggers alerts. |
+| Event                              | Emitted by         | Payload (key fields)                       | Consumed by                                                       | Sync/Async notes                                                         |
+| ---------------------------------- | ------------------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `qualification.answer.captured.v1` | Lead Qualification | `leadId`, `questionId`, `answer`           | Lead Qualification (ScoringEngine), Analytics                     | Async; captured via AI or human.                                         |
+| `qualification.completed.v1`       | Lead Qualification | `leadId`, `setId`                          | CRM, Campaign, Analytics                                          | Async.                                                                   |
+| `leadscore.updated.v1`             | Lead Qualification | `leadId`, `value`, `category`, `factors[]` | CRM (denormalized score copy), Campaign (segmentation), Analytics | Async; explainable — carries factors (BC-7); CRM copy derived from this. |
+| `leadscore.category.changed.v1`    | Lead Qualification | `leadId`, `from`, `to` (Cold/Warm/Hot)     | CRM, Campaign, Notifications, Analytics                           | Async; e.g. Warm→Hot triggers alerts.                                    |
 
 ### Campaign Engine (BC-4)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `campaign.created.v1` | Campaign | `campaignId`, `type`, `segment` | Analytics | Async. |
-| `campaign.launched.v1` | Campaign | `campaignId` | Campaign (orchestrator), Notifications (`CampaignStarted`), Analytics | Async; begins outreach. |
-| `campaign.leadlist.imported.v1` | Campaign | `campaignId`, `importBatchId`, `count` | Campaign (dedup), Analytics | Async. |
-| `campaign.leadlist.deduplicated.v1` | Campaign | `campaignId`, `dedupedCount`, `survivors` | Campaign (outreach), CRM, Analytics | Async; dedup before outreach (BC-4). |
-| `campaign.outreach.attempted.v1` | Campaign | `campaignId`, `leadId`, `channel`, `step` | Voice/WhatsApp channels, Analytics | Async; at-most-once per step (BC-4); per-tenant rate limited. |
-| `campaign.outreach.responded.v1` | Campaign | `campaignId`, `leadId`, `outcome` | Follow-up engine, CRM, Analytics | Async. |
-| `followup.scheduled.v1` | Campaign (FollowUpEngine) | `leadId`, `trigger`, `dueAt` | Campaign (scheduler), Analytics | Async. |
-| `followup.fired.v1` | Campaign | `leadId`, `trigger` | Voice/WhatsApp, Notifications (`FollowUpDue`), Analytics | Async; stops on convert/opt-out. |
-| `campaign.optout.recorded.v1` | Campaign | `contactId`, `channel?` | Campaign (halt outreach), CRM, Notifications, Analytics | Async; **stops all outreach immediately** (BC-4 never-violate). |
-| `campaign.completed.v1` | Campaign | `campaignId`, summary stats | Notifications (`CampaignCompleted`), Analytics | Async. |
+| Event                               | Emitted by                | Payload (key fields)                      | Consumed by                                                           | Sync/Async notes                                                |
+| ----------------------------------- | ------------------------- | ----------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `campaign.created.v1`               | Campaign                  | `campaignId`, `type`, `segment`           | Analytics                                                             | Async.                                                          |
+| `campaign.launched.v1`              | Campaign                  | `campaignId`                              | Campaign (orchestrator), Notifications (`CampaignStarted`), Analytics | Async; begins outreach.                                         |
+| `campaign.leadlist.imported.v1`     | Campaign                  | `campaignId`, `importBatchId`, `count`    | Campaign (dedup), Analytics                                           | Async.                                                          |
+| `campaign.leadlist.deduplicated.v1` | Campaign                  | `campaignId`, `dedupedCount`, `survivors` | Campaign (outreach), CRM, Analytics                                   | Async; dedup before outreach (BC-4).                            |
+| `campaign.outreach.attempted.v1`    | Campaign                  | `campaignId`, `leadId`, `channel`, `step` | Voice/WhatsApp channels, Analytics                                    | Async; at-most-once per step (BC-4); per-tenant rate limited.   |
+| `campaign.outreach.responded.v1`    | Campaign                  | `campaignId`, `leadId`, `outcome`         | Follow-up engine, CRM, Analytics                                      | Async.                                                          |
+| `followup.scheduled.v1`             | Campaign (FollowUpEngine) | `leadId`, `trigger`, `dueAt`              | Campaign (scheduler), Analytics                                       | Async.                                                          |
+| `followup.fired.v1`                 | Campaign                  | `leadId`, `trigger`                       | Voice/WhatsApp, Notifications (`FollowUpDue`), Analytics              | Async; stops on convert/opt-out.                                |
+| `campaign.optout.recorded.v1`       | Campaign                  | `contactId`, `channel?`                   | Campaign (halt outreach), CRM, Notifications, Analytics               | Async; **stops all outreach immediately** (BC-4 never-violate). |
+| `campaign.completed.v1`             | Campaign                  | `campaignId`, summary stats               | Notifications (`CampaignCompleted`), Analytics                        | Async.                                                          |
 
 ### Appointments (BC-8.Appt)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `appointments.sitevisit.requested.v1` | Appointments | `leadId`, `type`, slot pref | Appointments (SchedulingService), Analytics | Async. |
-| `appointments.booked.v1` | Appointments | `appointmentId`, `leadId`, `slot`, `type`, `location?` | Notifications (`AppointmentBooked` + reminders), CRM (stage), Campaign, Analytics | Async; **must reliably schedule confirmation + reminders** (BC-8.Appt). |
-| `appointments.rescheduled.v1` | Appointments | `appointmentId`, `newSlot` | Notifications, CRM, Analytics | Async. |
-| `appointments.cancelled.v1` | Appointments | `appointmentId`, `reason` | Notifications, CRM, Campaign, Analytics | Async. |
-| `appointments.reminder.due.v1` | Appointments (ReminderScheduler) | `appointmentId`, `channel` | Notifications (deliver reminder) | Async; scheduled job. |
-| `appointments.noshow.recorded.v1` | Appointments | `appointmentId`, `leadId` | Campaign (reschedule follow-up), CRM, Analytics | Async; triggers MissedSiteVisit follow-up (BC-8.Appt). |
-| `appointments.completed.v1` | Appointments | `appointmentId`, `outcome` | CRM (stage VisitCompleted), Lead Qualification, Analytics | Async. |
+| Event                                 | Emitted by                       | Payload (key fields)                                   | Consumed by                                                                       | Sync/Async notes                                                        |
+| ------------------------------------- | -------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `appointments.sitevisit.requested.v1` | Appointments                     | `leadId`, `type`, slot pref                            | Appointments (SchedulingService), Analytics                                       | Async.                                                                  |
+| `appointments.booked.v1`              | Appointments                     | `appointmentId`, `leadId`, `slot`, `type`, `location?` | Notifications (`AppointmentBooked` + reminders), CRM (stage), Campaign, Analytics | Async; **must reliably schedule confirmation + reminders** (BC-8.Appt). |
+| `appointments.rescheduled.v1`         | Appointments                     | `appointmentId`, `newSlot`                             | Notifications, CRM, Analytics                                                     | Async.                                                                  |
+| `appointments.cancelled.v1`           | Appointments                     | `appointmentId`, `reason`                              | Notifications, CRM, Campaign, Analytics                                           | Async.                                                                  |
+| `appointments.reminder.due.v1`        | Appointments (ReminderScheduler) | `appointmentId`, `channel`                             | Notifications (deliver reminder)                                                  | Async; scheduled job.                                                   |
+| `appointments.noshow.recorded.v1`     | Appointments                     | `appointmentId`, `leadId`                              | Campaign (reschedule follow-up), CRM, Analytics                                   | Async; triggers MissedSiteVisit follow-up (BC-8.Appt).                  |
+| `appointments.completed.v1`           | Appointments                     | `appointmentId`, `outcome`                             | CRM (stage VisitCompleted), Lead Qualification, Analytics                         | Async.                                                                  |
 
 ### Notifications (BC-12)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| `notifications.dispatch.requested.v1` | Notifications (NotificationRouter) | `event`, `recipients`, `channels` | Notifications (DeliveryService) | Async; fan-out per org rules. |
-| `notifications.delivered.v1` | Notifications | `requestId`, `recipient`, `channel` | Analytics, WS gateway (InApp push) | Async; idempotent dedupe by (event id + recipient + channel) (BC-12). |
-| `notifications.failed.v1` | Notifications | `requestId`, `channel`, `reason` | Notifications (retry/backoff→DLQ), Platform Ops | Async; never silently dropped for escalation/`WorkflowFailure`. |
+| Event                                 | Emitted by                         | Payload (key fields)                | Consumed by                                     | Sync/Async notes                                                      |
+| ------------------------------------- | ---------------------------------- | ----------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
+| `notifications.dispatch.requested.v1` | Notifications (NotificationRouter) | `event`, `recipients`, `channels`   | Notifications (DeliveryService)                 | Async; fan-out per org rules.                                         |
+| `notifications.delivered.v1`          | Notifications                      | `requestId`, `recipient`, `channel` | Analytics, WS gateway (InApp push)              | Async; idempotent dedupe by (event id + recipient + channel) (BC-12). |
+| `notifications.failed.v1`             | Notifications                      | `requestId`, `channel`, `reason`    | Notifications (retry/backoff→DLQ), Platform Ops | Async; never silently dropped for escalation/`WorkflowFailure`.       |
 
 ### Analytics (BC-13) & Platform Ops (BC-14)
 
-| Event | Emitted by | Payload (key fields) | Consumed by | Sync/Async notes |
-|---|---|---|---|---|
-| (Analytics emits no domain events) | — | — | — | Pure downstream read-model **consumer** of all events; writes no operational state (BC-13). |
-| (Platform Ops audit) | Platform Ops | `auditEntry` (actor, action, subject, org) | — | Append-only audit on sensitive/cross-tenant actions; consumes events + admin actions (BC-14). Audit log is never editable/deletable. |
+| Event                              | Emitted by   | Payload (key fields)                       | Consumed by | Sync/Async notes                                                                                                                     |
+| ---------------------------------- | ------------ | ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| (Analytics emits no domain events) | —            | —                                          | —           | Pure downstream read-model **consumer** of all events; writes no operational state (BC-13).                                          |
+| (Platform Ops audit)               | Platform Ops | `auditEntry` (actor, action, subject, org) | —           | Append-only audit on sensitive/cross-tenant actions; consumes events + admin actions (BC-14). Audit log is never editable/deletable. |
 
 ---
 
@@ -324,7 +326,7 @@ BC-8.Appt never-violate).
 When you introduce or change an event, in the **same PR**:
 
 1. **Name** it `<context>.<aggregate>.<pastTenseFact>.v1` — past-tense fact, owned by the
-   **emitting** context (ARCHITECTURE §8). Confirm it is a *fact*, not a command (commands are
+   **emitting** context (ARCHITECTURE §8). Confirm it is a _fact_, not a command (commands are
    imperative and are NOT on the bus).
 2. **Schema:** add/extend the payload zod schema in `packages/contracts` (named `<eventName>`),
    plus the standard envelope. New field in an existing event → **optional** (additive). Breaking

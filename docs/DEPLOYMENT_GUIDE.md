@@ -18,11 +18,11 @@
 We run **three** long-lived environments. Each is fully isolated; nothing is shared across the boundary
 except the container images in ECR (immutable, promoted by digest).
 
-| Environment | Purpose | Isolation | Data | Who deploys |
-|---|---|---|---|---|
-| **dev** | Integration of merged trunk changes; always-on shared sandbox for engineers/agents | Separate AWS account + VPC | Synthetic / seeded only (no real PII) | Auto on merge to `main` |
-| **staging** | Production rehearsal: pre-release validation, migration dry-runs, load/latency checks, smoke tests | Separate AWS account + VPC; prod-shaped infra at reduced scale | Anonymized prod-like dataset; no real customer PII | Auto on release candidate (RC) tag |
-| **prod** | Live multi-tenant customer traffic | Separate AWS account + VPC; strictest WAF/SCP/guardrails | Real tenant PII (encrypted, RLS-enforced) | Manual gated promotion of the exact staging digest |
+| Environment | Purpose                                                                                            | Isolation                                                      | Data                                               | Who deploys                                        |
+| ----------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| **dev**     | Integration of merged trunk changes; always-on shared sandbox for engineers/agents                 | Separate AWS account + VPC                                     | Synthetic / seeded only (no real PII)              | Auto on merge to `main`                            |
+| **staging** | Production rehearsal: pre-release validation, migration dry-runs, load/latency checks, smoke tests | Separate AWS account + VPC; prod-shaped infra at reduced scale | Anonymized prod-like dataset; no real customer PII | Auto on release candidate (RC) tag                 |
+| **prod**    | Live multi-tenant customer traffic                                                                 | Separate AWS account + VPC; strictest WAF/SCP/guardrails       | Real tenant PII (encrypted, RLS-enforced)          | Manual gated promotion of the exact staging digest |
 
 **Isolation principles (non-negotiable):**
 
@@ -30,7 +30,7 @@ except the container images in ECR (immutable, promoted by digest).
   credential leak in dev must never reach prod data. Blast radius is the account boundary.
 - **Separate VPCs**, subnets, security groups, RDS instances, ElastiCache clusters, S3 buckets,
   Secrets Manager/SSM trees, and ECS clusters per environment. No peering between dev and prod.
-- **No cross-environment IAM.** ECS task roles are scoped per service *and* per environment (least
+- **No cross-environment IAM.** ECS task roles are scoped per service _and_ per environment (least
   privilege, per `ARCHITECTURE.md` §14).
 - **Config, not code, differs across environments.** The same image digest runs everywhere; behavior is
   driven by env/SSM. See §6.
@@ -128,7 +128,7 @@ All four services are built from the monorepo; workers and voice-gateway reuse d
 - **Build args:** none secret; STT/TTS/LLM provider config via SSM at runtime.
 - **Health checks:** `GET /health/live` + `/health/ready` (checks Redis session store + provider
   connectivity). Keep checks cheap so they never compete with the realtime loop.
-- **Autoscaling signal:** **concurrent active calls** (custom metric) — *not* CPU alone. Scale out before
+- **Autoscaling signal:** **concurrent active calls** (custom metric) — _not_ CPU alone. Scale out before
   saturation to protect the < 1.2s p95 voice turn budget (`ARCHITECTURE.md` §13).
 - **Sticky sessions:** a call is pinned to one task for its lifetime (ALB stickiness / connection affinity).
   Session state is **checkpointed to Redis** so a draining task can hand off (`ARCHITECTURE.md` §12).
@@ -163,7 +163,7 @@ local).
 ### 4.1 How migrations run (pre-deploy, one-off task)
 
 - Migrations run as a **dedicated one-off ECS task** (`infra/scripts/migrate`) **before** the new app tasks
-  roll out — *not* in an app container's entrypoint (so N tasks don't race to migrate).
+  roll out — _not_ in an app container's entrypoint (so N tasks don't race to migrate).
 - The deploy pipeline gates the app rollout on the migration task exiting 0.
 - Run on a **dedicated migration IAM role** that holds DDL privileges; app task roles do **not**.
 
@@ -184,7 +184,7 @@ Never rename or drop a column in the same release that the new code starts depen
 
 - Row-Level Security policies (`ARCHITECTURE.md` §10) live in `packages/database` alongside the schema and
   are applied as part of migrations (SQL migrations for `CREATE POLICY` / `ALTER TABLE ... ENABLE ROW LEVEL
-  SECURITY`).
+SECURITY`).
 - **Every new tenant-scoped table must ship with its RLS policy in the same migration.** A migration that
   adds a tenant table without RLS should fail review (and ideally a CI lint check).
 - App connections run as a non-superuser role bound by RLS; the migration role and audited super-admin path
@@ -215,7 +215,7 @@ Never rename or drop a column in the same release that the new code starts depen
 
 ## 6. Secrets & Configuration
 
-- **Source of truth for *what* config exists:** `.env.example` at the repo root — every variable documented,
+- **Source of truth for _what_ config exists:** `.env.example` at the repo root — every variable documented,
   **no secret values**. All code reads env through `packages/config` (validated zod schema;
   `REPOSITORY_STRUCTURE.md` §5.5) — no scattered `process.env`.
 - **Where values live:** **AWS Secrets Manager** (secrets: DB creds, provider API keys for
@@ -289,6 +289,7 @@ Never rename or drop a column in the same release that the new code starts depen
 ## 10. Deploy Checklist
 
 **Before:**
+
 - [ ] PR merged to `main`; all CI gates green (lint, boundaries, typecheck, unit, integration, **cross-tenant tests**).
 - [ ] Image built, pushed to ECR, scanned (no CRITICAL CVEs); digest recorded.
 - [ ] Migration reviewed for **expand–contract** safety; RLS policy included for any new tenant table.
@@ -297,11 +298,13 @@ Never rename or drop a column in the same release that the new code starts depen
 - [ ] For prod: manual approval obtained; **fresh RDS snapshot** taken if contract-phase migration.
 
 **During:**
+
 - [ ] Run migration one-off task → exit 0 before app rollout.
 - [ ] Roll out task-def revision (rolling/blue-green); watch ECS reach steady state.
 - [ ] Watch CloudWatch (latency, 5xx, queue depth, voice concurrency) and Sentry for new release errors.
 
 **After:**
+
 - [ ] Smoke tests pass against the live environment (incl. tenant-isolation probe).
 - [ ] Sentry release created + source maps uploaded + commits associated.
 - [ ] Dashboards healthy for 15–30 min; no new alarms.

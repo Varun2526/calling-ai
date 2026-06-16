@@ -38,6 +38,7 @@ Read these in order — they make any engineer or AI agent productive fast:
 5. [`docs/CLEAN_ARCHITECTURE.md`](docs/CLEAN_ARCHITECTURE.md) — the dependency rules CI enforces.
 
 Then, depending on what you're doing:
+
 - Building a feature → [`docs/FEATURE_BLUEPRINT.md`](docs/FEATURE_BLUEPRINT.md) + [`docs/feature-specs/`](docs/feature-specs/)
 - An AI coding agent → [`docs/AI_AGENT_GUIDELINES.md`](docs/AI_AGENT_GUIDELINES.md)
 - Contributing → [`CONTRIBUTING.md`](CONTRIBUTING.md) + [`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md)
@@ -59,14 +60,14 @@ infrastructure; (3) cross-context side effects are **events**, never inline call
 
 ## Documentation map
 
-| Area | Doc |
-|---|---|
-| Product | [PRODUCT_OVERVIEW](docs/PRODUCT_OVERVIEW.md) · [Source PRD](docs/prd/CALLING_AI_V1.md) · [PRD_REVIEW](docs/PRD_REVIEW.md) |
-| Architecture | [ARCHITECTURE](docs/ARCHITECTURE.md) · [DOMAIN_RULES](docs/DOMAIN_RULES.md) · [REPOSITORY_STRUCTURE](docs/REPOSITORY_STRUCTURE.md) · [CLEAN_ARCHITECTURE](docs/CLEAN_ARCHITECTURE.md) |
-| Contracts | [API_CONTRACTS](docs/API_CONTRACTS.md) · [EVENT_CATALOG](docs/EVENT_CATALOG.md) |
-| Decisions | [DECISION_LOG](docs/DECISION_LOG.md) · [ADRs](docs/adr/) |
-| Standards | [ENGINEERING_STANDARDS](docs/ENGINEERING_STANDARDS.md) · [CONTRIBUTING](CONTRIBUTING.md) · [AI_AGENT_GUIDELINES](docs/AI_AGENT_GUIDELINES.md) |
-| Delivery | [ROADMAP](docs/ROADMAP.md) · [FEATURE_BLUEPRINT](docs/FEATURE_BLUEPRINT.md) · [feature-specs](docs/feature-specs/) |
+| Area          | Doc                                                                                                                                                                                                                                    |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product       | [PRODUCT_OVERVIEW](docs/PRODUCT_OVERVIEW.md) · [Source PRD](docs/prd/CALLING_AI_V1.md) · [PRD_REVIEW](docs/PRD_REVIEW.md)                                                                                                              |
+| Architecture  | [ARCHITECTURE](docs/ARCHITECTURE.md) · [DOMAIN_RULES](docs/DOMAIN_RULES.md) · [REPOSITORY_STRUCTURE](docs/REPOSITORY_STRUCTURE.md) · [CLEAN_ARCHITECTURE](docs/CLEAN_ARCHITECTURE.md)                                                  |
+| Contracts     | [API_CONTRACTS](docs/API_CONTRACTS.md) · [EVENT_CATALOG](docs/EVENT_CATALOG.md)                                                                                                                                                        |
+| Decisions     | [DECISION_LOG](docs/DECISION_LOG.md) · [ADRs](docs/adr/)                                                                                                                                                                               |
+| Standards     | [ENGINEERING_STANDARDS](docs/ENGINEERING_STANDARDS.md) · [CONTRIBUTING](CONTRIBUTING.md) · [AI_AGENT_GUIDELINES](docs/AI_AGENT_GUIDELINES.md)                                                                                          |
+| Delivery      | [ROADMAP](docs/ROADMAP.md) · [FEATURE_BLUEPRINT](docs/FEATURE_BLUEPRINT.md) · [feature-specs](docs/feature-specs/)                                                                                                                     |
 | Ops & quality | [DEPLOYMENT_GUIDE](docs/DEPLOYMENT_GUIDE.md) · [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) · [runbooks](docs/runbooks/) · [SECURITY_GUIDELINES](docs/SECURITY_GUIDELINES.md) · [PERFORMANCE_GUIDELINES](docs/PERFORMANCE_GUIDELINES.md) |
 
 ## Status & roadmap

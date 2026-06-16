@@ -30,13 +30,16 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       detail = exception.message;
     }
 
-    res.status(status).type('application/problem+json').json({
-      type: `https://errors.propulse.ai/${code}`,
-      title,
-      status,
-      code,
-      detail,
-      correlationId,
-    });
+    res
+      .status(status)
+      .type('application/problem+json')
+      .json({
+        type: `https://errors.propulse.ai/${code}`,
+        title,
+        status,
+        code,
+        detail,
+        correlationId,
+      });
   }
 }

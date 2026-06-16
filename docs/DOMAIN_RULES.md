@@ -2,7 +2,7 @@
 
 > **Owner:** Domain owners per context (see CODEOWNERS) · **Update frequency:** whenever an
 > aggregate, invariant, or domain event changes (with an ADR if architecturally significant).
-> Builds on [`ARCHITECTURE.md`](ARCHITECTURE.md). This is the contract for the *domain layer* —
+> Builds on [`ARCHITECTURE.md`](ARCHITECTURE.md). This is the contract for the _domain layer_ —
 > the rules here must hold regardless of API, DB, or UI.
 
 ---
@@ -23,6 +23,7 @@ Each bounded context section follows the same template:
 - **Never-violate rules** — the subset whose violation is a Sev-1 correctness/security bug.
 
 **Global invariants (apply to every context):**
+
 1. Every aggregate carries an immutable `organizationId`; it is set at creation and never changes.
 2. No aggregate references another aggregate by object — only by typed ID.
 3. A single transaction mutates exactly **one** aggregate instance. Cross-aggregate effects go via events.
@@ -31,12 +32,12 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-1 — Identity & Access (IAM)  *(Generic / Shared Kernel for IDs)*
+## BC-1 — Identity & Access (IAM) _(Generic / Shared Kernel for IDs)_
 
 - **Responsibilities:** organizations-as-tenants, users, role assignment, invitations,
   sessions. Source of truth for "who is this and which org".
 - **Aggregate roots:**
-  - `Organization` (also the tenant root) — but org *business config* lives in the
+  - `Organization` (also the tenant root) — but org _business config_ lives in the
     Organization context (BC-9); here it holds only identity/lifecycle (status: active/suspended).
   - `User` — platform or tenant user; holds role assignments.
   - `Invitation` — pending access grant.
@@ -59,7 +60,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-9 — Organization & Onboarding  *(Supporting; templates are differentiating)*
+## BC-9 — Organization & Onboarding _(Supporting; templates are differentiating)_
 
 - **Responsibilities:** org business profile/config, real-estate **templates**, onboarding
   wizard state, and the rule sets (notification/qualification/assignment) the org operates by.
@@ -67,7 +68,7 @@ Each bounded context section follows the same template:
   - `OrganizationProfile` — company name, logo, business hours, timezone, country, languages,
     brand colors.
   - `OnboardingFlow` — ordered steps + completion state, drives the < 30-min wizard.
-  - `RealEstateTemplate` — a template *definition* (Developer/Builder/Broker/Agency/Individual).
+  - `RealEstateTemplate` — a template _definition_ (Developer/Builder/Broker/Agency/Individual).
 - **Entities:** `BusinessHours` (per-day windows), `NotificationRuleSet`,
   `QualificationRuleSet`, `AssignmentRuleSet`, `OnboardingStep`.
 - **Value objects:** `Timezone` (IANA), `Country` (ISO-3166), `Language` (enum of the 10 PRD
@@ -75,7 +76,7 @@ Each bounded context section follows the same template:
 - **Domain services:** `TemplateApplicationService` — **applies a template**, which emits
   intents to provision: CRM pipeline, an AI Employee, qualification questions, follow-up
   rules, notifications, dashboards, campaign templates, appointment rules (PRD). This is a
-  *saga*: it commands other contexts via events and tracks completion.
+  _saga_: it commands other contexts via events and tracks completion.
 - **Repositories:** `OrganizationProfileRepository`, `OnboardingFlowRepository`,
   `TemplateRepository`.
 - **Domain events:** `org.profile.updated.v1`, `org.template.applied.v1`,
@@ -89,7 +90,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-5 — Knowledge Base  *(Supporting)*
+## BC-5 — Knowledge Base _(Supporting)_
 
 - **Responsibilities:** ingest sources → produce retrievable, grounded knowledge for AI
   Employees. Owns the RAG corpus and retrieval.
@@ -118,7 +119,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-2 — Conversation Engine  *(Core — the hub)*
+## BC-2 — Conversation Engine _(Core — the hub)_
 
 - **Responsibilities:** the single unified, cross-channel **timeline** per Contact; identity
   resolution; message ingestion/ordering; conversation lifecycle and handoff state.
@@ -149,12 +150,12 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-1.AI — AI Employee  *(Core — the brain)*
+## BC-1.AI — AI Employee _(Core — the brain)_
 
 - **Responsibilities:** the configured agent (identity, personality, knowledge bindings,
   permitted actions, goals, escalation rules); **prompt assembly**; **reasoning
   orchestration**; deciding which **actions** to take. Does NOT own conversations, CRM, KB, or
-  appointments — it *reads* and *commands* them.
+  appointments — it _reads_ and _commands_ them.
 - **Aggregate roots:**
   - `AIEmployee` — config aggregate: identity, personality, language settings, knowledge-source
     bindings, granted actions, goals, metrics config, escalation rules, permissions.
@@ -190,7 +191,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-6 — CRM  *(Supporting)*
+## BC-6 — CRM _(Supporting)_
 
 - **Responsibilities:** Contacts, Leads, pipeline, activities, assignment. The system of record
   for sales opportunities.
@@ -206,7 +207,7 @@ Each bounded context section follows the same template:
   Google/CSV/API), `LeadScoreSnapshot` (value + category Cold/Warm/Hot), `AssignmentStrategy`
   (RoundRobin, Manual, LocationBased, ProjectBased, Fallback), `Budget` (Money range),
   `Configuration` (e.g. 3BHK), `Timeline` (buying horizon).
-- **Domain services:** `IdentityResolution` *consumes* Conversation Engine's resolution to
+- **Domain services:** `IdentityResolution` _consumes_ Conversation Engine's resolution to
   avoid dupes; `AssignmentService` (applies strategy; **guarantees no lead is left
   unassigned** via fallback); `PipelineService` (legal stage transitions).
 - **Repositories:** `ContactRepository`, `LeadRepository`, `PipelineRepository`,
@@ -225,7 +226,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-7 — Lead Qualification & Scoring  *(Supporting)*
+## BC-7 — Lead Qualification & Scoring _(Supporting)_
 
 - **Responsibilities:** configurable qualification question sets; capturing answers; computing
   and updating lead score/category.
@@ -251,11 +252,12 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-3 — Voice / Telephony  *(Core)* & BC-8.Calls — Calls & Transcription
+## BC-3 — Voice / Telephony _(Core)_ & BC-8.Calls — Calls & Transcription
 
-> Two collaborating contexts; Voice handles the *live* call, Calls handles the *artifacts*.
+> Two collaborating contexts; Voice handles the _live_ call, Calls handles the _artifacts_.
 
 **Voice / Telephony**
+
 - **Responsibilities:** call lifecycle (incoming/outgoing), the realtime STT↔LLM↔TTS loop,
   interruptions, human transfer.
 - **Aggregate roots:** `Call` (lifecycle: ringing→active→completed/failed/transferred),
@@ -274,6 +276,7 @@ Each bounded context section follows the same template:
   callback/notification).
 
 **Calls & Transcription**
+
 - **Responsibilities:** recordings, transcripts (speaker-separated, timestamped), AI summaries,
   sentiment, extracted requirements, action items, searchable transcript intelligence.
 - **Aggregate roots:** `CallRecord` (the post-call artifact aggregate), `Transcript`.
@@ -295,7 +298,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-4 — Campaign Engine  *(Core)*
+## BC-4 — Campaign Engine _(Core)_
 
 - **Responsibilities:** inbound + outbound campaigns; lead-list import/dedup/enrich; audience
   segmentation; outreach orchestration (call/WhatsApp); the **follow-up engine**; stop on
@@ -330,7 +333,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-8.Appt — Appointments  *(Supporting)*
+## BC-8.Appt — Appointments _(Supporting)_
 
 - **Responsibilities:** site visits / virtual / phone consultations; booking, reschedule,
   cancel; reminders; executive assignment; calendar + maps integration.
@@ -354,7 +357,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-12 — Notifications  *(Generic)*
+## BC-12 — Notifications _(Generic)_
 
 - **Responsibilities:** deliver event-driven notifications across in-app / email / WhatsApp per
   org notification rules.
@@ -373,14 +376,14 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-13 — Analytics  *(Generic; read-model only)*
+## BC-13 — Analytics _(Generic; read-model only)_
 
 - **Responsibilities:** build read models from events; serve dashboard metrics (leads, calls,
   conversations, appointments, campaign perf, sources, response time, conversion, hot leads,
   sales/agent performance, sentiment distribution, site-visit conversion, CPL, ROAS).
 - **Aggregate roots:** none in the write sense — owns **projections / read models** keyed by org.
 - **Domain services:** `ProjectionBuilders` (one per metric family), `MetricsQueryService`.
-- **External deps:** consumes events from *every* context (downstream); read replica of DB.
+- **External deps:** consumes events from _every_ context (downstream); read replica of DB.
 - **Invariants:** projections are rebuildable by replaying events (idempotent, ordered);
   Analytics holds **no authoritative operational state**.
 - **Never-violate:** Analytics must never write back to operational tables; metrics are
@@ -388,7 +391,7 @@ Each bounded context section follows the same template:
 
 ---
 
-## BC-14 — Platform Ops / Admin  *(Generic)*
+## BC-14 — Platform Ops / Admin _(Generic)_
 
 - **Responsibilities:** super-admin views across orgs, append-only **audit log**, feature
   flags, system health.
@@ -402,7 +405,7 @@ Each bounded context section follows the same template:
 ## Separation-of-concerns recommendations
 
 1. **Keep real-estate specifics in the config/template layer, not the core domain.** Pipeline
-   stages, qualification questions, scoring weights, follow-up rules are *data*, not code, so
+   stages, qualification questions, scoring weights, follow-up rules are _data_, not code, so
    new verticals/templates don't fork the domain.
 2. **AI Employee orchestrates; it does not own.** All persistent state belongs to CRM/KB/
    Conversation/Appointments. The AI's only owned state is its config + ephemeral reasoning

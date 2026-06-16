@@ -4,7 +4,7 @@
 > or workflow change (with an ADR if significant) · **Audience:** AI coding agents (Claude,
 > Cursor, etc.) **and** the human developers who work with them.
 
-This is the operating manual for *changing this codebase correctly*. If you are an AI agent,
+This is the operating manual for _changing this codebase correctly_. If you are an AI agent,
 read it as hard constraints: the rules below are enforced by CI, so violating them produces a
 **build failure**, not a review comment. If you are a human, read it as the contract you and
 your AI pair are both held to.
@@ -26,7 +26,7 @@ task needs**, in this order:
    §4 per-directory charter).
 5. [`CLEAN_ARCHITECTURE.md`](CLEAN_ARCHITECTURE.md) — the dependency rules (§3 matrix, §4
    violations + fixes).
-6. The relevant **ADR(s)** in [`adr/`](adr/) for *why* the design is the way it is, and
+6. The relevant **ADR(s)** in [`adr/`](adr/) for _why_ the design is the way it is, and
    [`DECISION_LOG.md`](DECISION_LOG.md) for the index + risk register.
 7. Reference docs as needed: [`API_CONTRACTS.md`](API_CONTRACTS.md),
    [`EVENT_CATALOG.md`](EVENT_CATALOG.md), [`FEATURE_BLUEPRINT.md`](FEATURE_BLUEPRINT.md),
@@ -47,7 +47,7 @@ These come straight from [`ARCHITECTURE.md`](ARCHITECTURE.md) §0 and
 
 1. **Tenant isolation is sacred.** Every row, cache key, queue job, S3 object, and vector is
    scoped to an `organizationId`. There is **no** code path that reads tenant data without a
-   tenant context. `organizationId` comes from the *authenticated session*, never from a
+   tenant context. `organizationId` comes from the _authenticated session_, never from a
    request body. Enforced in depth: app guard → Prisma middleware → Postgres RLS
    ([ADR-0001](adr/0001-multi-tenancy-shared-schema-rls.md)). Every aggregate's
    `organizationId` is set at creation and **never changes**.
@@ -56,7 +56,7 @@ These come straight from [`ARCHITECTURE.md`](ARCHITECTURE.md) §0 and
    must be unit-testable with zero network and zero framework. A CI grep enforces this
    ([`CLEAN_ARCHITECTURE.md`](CLEAN_ARCHITECTURE.md) §5).
 3. **Side effects are events, not inline calls.** Crossing a context boundary as a side effect
-   means *emit a domain event to the outbox* — never call another context's service to make
+   means _emit a domain event to the outbox_ — never call another context's service to make
    something happen. CRM emits `crm.lead.created.v1`; it does not call Notifications
    ([ADR-0006](adr/0006-event-bus-and-outbox.md);
    [`CLEAN_ARCHITECTURE.md`](CLEAN_ARCHITECTURE.md) §4 Violation D).
@@ -81,11 +81,11 @@ per-directory charter in §4. The shape of a bounded-context module
   Pure. No `@nestjs`, no Prisma, no I/O, no `process.env`.
 - **`application/`** — command/query/event handlers, transaction orchestration, the
   **outbox-write decision**, use-case-level authorization. Depends on domain (+ contracts +
-  other contexts' *published* app interfaces). No SQL, no SDK calls.
+  other contexts' _published_ app interfaces). No SQL, no SDK calls.
 - **`infrastructure/`** — Prisma repository implementations, third-party adapters, mappers, the
   outbox relay. Implements the domain's ports. **No business decisions.**
 - **`presentation/`** — REST controllers, WS gateways, route-level CASL policies. A controller
-  body is: *validate (zod from contracts) → call use case → map result to a DTO*. No business
+  body is: _validate (zod from contracts) → call use case → map result to a DTO_. No business
   logic, no persistence.
 
 Dependency direction (CI-enforced): `presentation → application → domain`, and
@@ -157,7 +157,7 @@ see one, fix it (or flag it):
 
 - **Don't bypass tenant scoping.** No reading/writing tenant data without the tenant context;
   no taking `organizationId` from the request body; no unregistered tenant-scoped Prisma model.
-  The super-admin bypass is *only* the audited platform path
+  The super-admin bypass is _only_ the audited platform path
   ([ADR-0001](adr/0001-multi-tenancy-shared-schema-rls.md)).
 - **Don't import another context's `domain/` or `infrastructure/`.** Only its published
   application interface or its contract/event types
@@ -165,7 +165,7 @@ see one, fix it (or flag it):
 - **Don't put business logic in controllers** (or any presentation code). Validate → call use
   case → map. Scoring, pipeline transitions, assignment rules belong in the domain
   ([`CLEAN_ARCHITECTURE.md`](CLEAN_ARCHITECTURE.md) §4 Violation C).
-- **Don't add new business logic only in workers.** Workers *invoke* application use cases;
+- **Don't add new business logic only in workers.** Workers _invoke_ application use cases;
   domain logic has exactly one home, in `contexts/` ([`REPOSITORY_STRUCTURE.md`](REPOSITORY_STRUCTURE.md) §4, §5 rule 7).
 - **Don't hardcode real-estate specifics into the core domain.** Pipeline stages, qualification
   questions, scoring weights, follow-up rules are **config/template data**, not code — so new
@@ -184,7 +184,7 @@ see one, fix it (or flag it):
 
 ## 7. Testing & verification — before you claim "done"
 
-"Done" means *verified*, not *written*. Before you say a task is complete:
+"Done" means _verified_, not _written_. Before you say a task is complete:
 
 - **Domain logic has unit tests** with no mocks of frameworks (the domain is pure, so this is
   cheap). New invariants get tests that assert them.
@@ -217,7 +217,7 @@ ADR that updates the rule doc **and** the lint config in the same PR.
   behavior changes.
 - **Update docs in the same PR** as the code: event → `EVENT_CATALOG.md` + `contracts`; API →
   `API_CONTRACTS.md`; new module/app → `REPOSITORY_STRUCTURE.md`; significant decision → an ADR
-  + a row in `DECISION_LOG.md`.
+  - a row in `DECISION_LOG.md`.
 - PR description states: the bounded context(s) touched, the invariants relevant to the change,
   events added/changed, and the verification output (§7).
 - Respect **CODEOWNERS**: a context's `domain/` needs its owner's review; boundary configs need
@@ -237,7 +237,7 @@ changes a boundary or invariant, the tech stack, the data/tenancy model, the sec
 the event/contract contracts, or anything other teams must build around. Process:
 [`DECISION_LOG.md`](DECISION_LOG.md) "Adding a decision" → copy
 [`adr/_TEMPLATE.md`](adr/_TEMPLATE.md), fill it, add the index row, in the same PR. To reverse a
-decision, *supersede* it with a new ADR; never edit an accepted one's substance.
+decision, _supersede_ it with a new ADR; never edit an accepted one's substance.
 
 ---
 

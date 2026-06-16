@@ -24,7 +24,11 @@ export function AppShell({ title, navItems, children }: AppShellProps) {
         <div className="mb-6 text-lg font-semibold">{title}</div>
         <nav className="flex flex-col gap-1">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className="rounded px-2 py-1 text-sm hover:bg-border/40">
+            <a
+              key={item.href}
+              href={item.href}
+              className="rounded px-2 py-1 text-sm hover:bg-border/40"
+            >
               {item.label}
             </a>
           ))}

@@ -1,13 +1,13 @@
 ---
-feature: "<Feature name — short, human-readable>"
-slug: "NNNN-short-slug"            # matches the filename; 4-digit, zero-padded, increasing
-owner: "<name / GitHub handle>"     # the DRI; co-owners = CODEOWNERS of touched contexts
-status: "Draft"                     # Draft | In Review | Approved | In Progress | Shipped | Superseded
-target_release: "<release / sprint>"
-related_adrs: []                    # e.g. ["adr/0007-...md"] — required if architecturally significant
-bounded_contexts: []                # owning + collaborating, e.g. ["channels", "conversation", "crm"]
-created: "<YYYY-MM-DD>"
-last_updated: "<YYYY-MM-DD>"
+feature: '<Feature name — short, human-readable>'
+slug: 'NNNN-short-slug' # matches the filename; 4-digit, zero-padded, increasing
+owner: '<name / GitHub handle>' # the DRI; co-owners = CODEOWNERS of touched contexts
+status: 'Draft' # Draft | In Review | Approved | In Progress | Shipped | Superseded
+target_release: '<release / sprint>'
+related_adrs: [] # e.g. ["adr/0007-...md"] — required if architecturally significant
+bounded_contexts: [] # owning + collaborating, e.g. ["channels", "conversation", "crm"]
+created: '<YYYY-MM-DD>'
+last_updated: '<YYYY-MM-DD>'
 ---
 
 # <Feature name>

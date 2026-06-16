@@ -28,14 +28,15 @@
 
 Inner layers define **interfaces (ports)**; outer layers provide **implementations
 (adapters)**. The domain says "I need a `LeadRepository`"; infrastructure provides
-`PrismaLeadRepository`. The arrow of *dependency* points inward even though the arrow of
-*control* (calls) flows outward at runtime — that inversion is the whole point.
+`PrismaLeadRepository`. The arrow of _dependency_ points inward even though the arrow of
+_control_ (calls) flows outward at runtime — that inversion is the whole point.
 
 ---
 
 ## 2. Layer responsibilities
 
 ### Domain layer (innermost — the "what is true")
+
 - **Owns:** entities, aggregate roots, value objects, domain services, domain events, business
   invariants, and **port interfaces** (repositories, gateways the domain needs).
 - **Responsibilities:** enforce business rules and invariants; be the single source of truth
@@ -45,16 +46,18 @@ Inner layers define **interfaces (ports)**; outer layers provide **implementatio
   in business logic (inject a clock port), and any I/O.
 
 ### Application layer (use cases — the "what the system does")
+
 - **Owns:** command handlers, query handlers, event handlers, transaction orchestration,
   application DTOs, the **Outbox-write** decision.
 - **Responsibilities:** orchestrate domain objects to fulfill a use case; begin/commit the
   transaction; call ports; emit domain events (to the outbox); enforce authorization at the
-  use-case level. Contains *no business rules* (those are in domain) and *no I/O details*
+  use-case level. Contains _no business rules_ (those are in domain) and _no I/O details_
   (those are behind ports).
 - **Knows about:** domain (its own context) + `contracts` + other contexts' **published
   application interfaces/contracts** (never their domain/infra).
 
 ### Infrastructure layer (adapters — the "how, technically")
+
 - **Owns:** Prisma repository implementations, external-service adapters (Twilio, OpenAI,
   Deepgram, ElevenLabs, WhatsApp, S3, SES, Maps), cache adapters, queue producers, mappers
   (domain ↔ persistence), the outbox relay.
@@ -64,6 +67,7 @@ Inner layers define **interfaces (ports)**; outer layers provide **implementatio
   business decisions** — if an adapter has an `if` that decides business outcome, it's misplaced.
 
 ### Presentation layer (delivery — the "how it's exposed")
+
 - **Owns (backend):** REST controllers, WebSocket gateways, request validation (zod from
   `contracts`), route-level authorization policies, HTTP problem-details mapping.
 - **Owns (frontend):** Next.js routes/pages, React components, feature slices, the API client.
@@ -76,13 +80,13 @@ Inner layers define **interfaces (ports)**; outer layers provide **implementatio
 
 ## 3. Allowed vs forbidden dependencies (matrix)
 
-| From ↓ / May import → | domain-kernel | own domain | own application | own infra | other ctx contracts | other ctx app iface | other ctx domain/infra | `@nestjs`/SDKs | Prisma |
-|---|---|---|---|---|---|---|---|---|---|
-| **domain** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **application** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ DI types only | ❌ |
-| **infrastructure** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **presentation** | ✅ | ❌ (map via DTO) | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **packages/** | varies | — | — | — | — | — | ❌ apps | varies | only `database` |
+| From ↓ / May import → | domain-kernel | own domain       | own application | own infra | other ctx contracts | other ctx app iface | other ctx domain/infra | `@nestjs`/SDKs   | Prisma          |
+| --------------------- | ------------- | ---------------- | --------------- | --------- | ------------------- | ------------------- | ---------------------- | ---------------- | --------------- |
+| **domain**            | ✅            | ✅               | ❌              | ❌        | ❌                  | ❌                  | ❌                     | ❌               | ❌              |
+| **application**       | ✅            | ✅               | ✅              | ❌        | ✅                  | ✅                  | ❌                     | ⚠️ DI types only | ❌              |
+| **infrastructure**    | ✅            | ✅               | ✅              | ✅        | ✅                  | ❌                  | ❌                     | ✅               | ✅              |
+| **presentation**      | ✅            | ❌ (map via DTO) | ✅              | ❌        | ✅                  | ❌                  | ❌                     | ✅               | ❌              |
+| **packages/**         | varies        | —                | —               | —         | —                   | —                   | ❌ apps                | varies           | only `database` |
 
 Legend: ✅ allowed · ❌ forbidden (CI fails) · ⚠️ allowed only for framework DI plumbing, not logic.
 
@@ -91,48 +95,60 @@ Legend: ✅ allowed · ❌ forbidden (CI fails) · ⚠️ allowed only for frame
 ## 4. Examples of violations (and the fix)
 
 **Violation A — domain importing infrastructure**
+
 ```
 // contexts/crm/domain/services/AssignmentService.ts
 import { PrismaService } from '@nestjs/prisma';   // ❌ domain knows Prisma
 ```
-*Fix:* domain depends on a `LeadRepository` **port** (interface) it defines; `PrismaService`
+
+_Fix:_ domain depends on a `LeadRepository` **port** (interface) it defines; `PrismaService`
 lives only in `infrastructure/persistence/PrismaLeadRepository.ts` which implements that port.
 
 **Violation B — cross-context table access**
+
 ```
 // contexts/campaign/infrastructure/...
 const leads = await prisma.lead.findMany(...);   // ❌ campaign reading CRM's table
 ```
-*Fix:* call CRM's published `ListLeadsForSegment` application query, or consume
+
+_Fix:_ call CRM's published `ListLeadsForSegment` application query, or consume
 `crm.lead.created.v1` to build a campaign-side read model. Campaign never touches CRM tables.
 
 **Violation C — business logic in a controller**
+
 ```
 // presentation/controllers/LeadController.ts
 if (lead.budget > 10000000) lead.category = 'Hot';   // ❌ scoring rule in presentation
 ```
-*Fix:* the rule belongs to the `ScoringEngine` in the Lead Qualification domain. Controller
+
+_Fix:_ the rule belongs to the `ScoringEngine` in the Lead Qualification domain. Controller
 just calls the use case.
 
 **Violation D — side effect via direct service call**
+
 ```
 // application/commands/CreateLead.ts
 await this.notificationService.send(...);   // ❌ synchronous cross-context coupling
 ```
-*Fix:* emit `crm.lead.created.v1` to the outbox; the Notifications context subscribes. CRM
+
+_Fix:_ emit `crm.lead.created.v1` to the outbox; the Notifications context subscribes. CRM
 doesn't know Notifications exists.
 
 **Violation E — env access deep in code**
+
 ```
 const key = process.env.OPENAI_API_KEY;   // ❌ scattered, unvalidated
 ```
-*Fix:* inject validated config from `packages/config`.
+
+_Fix:_ inject validated config from `packages/config`.
 
 **Violation F — leaking a domain entity over HTTP**
+
 ```
 return lead;   // ❌ exposes internal aggregate shape + invariants to the wire
 ```
-*Fix:* map to a `LeadResponseDto` defined in `packages/contracts`.
+
+_Fix:_ map to a `LeadResponseDto` defined in `packages/contracts`.
 
 ---
 
@@ -156,4 +172,4 @@ Rules that depend on reviewer vigilance rot. We enforce mechanically:
    dependencies, run in CI alongside unit tests.
 
 A violation is a **build failure**, not a comment. The only way to relax a boundary is an ADR
-that updates this document *and* the lint config in the same PR.
+that updates this document _and_ the lint config in the same PR.
